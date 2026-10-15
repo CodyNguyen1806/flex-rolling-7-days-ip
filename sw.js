@@ -1,7 +1,22 @@
-const CACHE='flex-rolling-iphone-v1';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));self.skipWaiting()});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim()});
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;
-if(event.request.mode==='navigate'){event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy))}return response}).catch(()=>caches.match(event.request).then(r=>r||caches.match('./index.html'))));return}
-event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request)))});
+// Flex Rolling 7 Days — network-first navigation, offline fallback.
+const CACHE = 'flex-rolling-ocr-20261014-v4';
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['./index.html']).catch(()=>{})));
+  self.skipWaiting();
+});
+self.addEventListener('activate', event => {
+  event.waitUntil(Promise.all([
+    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('flex-rolling-') && key !== CACHE).map(key => caches.delete(key)))),
+    self.clients.claim()
+  ]));
+});
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+  if (request.mode === 'navigate' || request.url.endsWith('/index.html')) {
+    event.respondWith(fetch(request).then(response => {
+      if (response.ok) { const copy=response.clone(); caches.open(CACHE).then(cache=>cache.put(request,copy)); }
+      return response;
+    }).catch(async () => (await caches.match(request)) || (await caches.match('./index.html')) || Response.error()));
+  }
+});

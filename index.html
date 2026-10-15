@@ -87,13 +87,19 @@ input,select,button{max-width:100%;min-width:0}
 #entries .row.flex-out-row::before{content:'OUT';position:absolute;top:-19px;left:0;font-size:10px;font-weight:800;color:#b7352e}
 #entries .row.flex-out-row .date-cell{border-color:#d65b55;background:#fff0ef}
 #entries .row.flex-out-row .date-label{color:#b7352e;font-weight:800}
+/* OCR review: 1 field per row on narrow mobile screens; never overlap native time inputs. */
+.flex-review{grid-template-columns:repeat(2,minmax(0,1fr))!important;min-width:0}
+.flex-review>div{min-width:0}.flex-review .flex-date{grid-column:1/-1}
+.flex-review input,.flex-review select{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;font-size:16px!important}
+.flex-review .flex-remove{grid-column:1/-1;width:100%}
+@media(max-width:380px){.flex-review{grid-template-columns:minmax(0,1fr)!important}.flex-review .flex-date,.flex-review .flex-remove{grid-column:1}}
 </style><style id="auto-today-styles">.auto-today-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;min-height:30px}.auto-today-text{display:flex;align-items:center;gap:7px;margin:0;font-size:12px;font-weight:600;white-space:nowrap}.auto-today-text span{font-size:10px;opacity:.7}.auto-today-switch{position:relative;display:inline-block;width:43px;height:25px;flex:none}.auto-today-switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}.auto-today-track{display:block;width:43px;height:25px;background:#a6adb5;border-radius:20px;transition:background .2s;pointer-events:none}.auto-today-track:after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;background:white;border-radius:50%;box-shadow:0 1px 3px #0003;transition:transform .2s}#auto-today:checked+.auto-today-track{background:#30c76a}#auto-today:checked+.auto-today-track:after{transform:translateX(18px)}#auto-today:focus-visible+.auto-today-track{outline:2px solid #2563eb;outline-offset:3px}</style></head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
 <section class="card"><div class="grid"><div><label for="day">Ngày cần kiểm tra</label><input id="day" type="date"><div class="auto-today-row"><label class="auto-today-text" for="auto-today">Auto Today <span id="auto-today-state">ON</span></label><label class="auto-today-switch"><input id="auto-today" type="checkbox" checked aria-label="Tự động chọn hôm nay"><span class="auto-today-track"></span></label></div></div><div><label for="cap">Giới hạn rolling (giờ)</label><input id="cap" type="number" min="1" max="168" step="0.5" value="40"></div></div><div class="grid" style="margin-top:12px"><div class="metric"><small>Đã chạy trong 7 ngày</small><strong id="used">–</strong></div><div class="metric"><small>Còn trước reserve hôm nay</small><strong class="green" id="free">–</strong></div><div class="metric"><small>Reserve hôm nay</small><strong id="reserved">–</strong></div><div class="metric"><small>Còn cho IO hôm nay</small><strong class="green" id="io">–</strong></div></div><div class="bar"><span id="bar"></span></div><div class="muted" id="window"></div><div class="hint" id="warning" style="margin-top:12px"></div></section>
 <section class="card"><h2>Ngày hôm sau được thêm bao nhiêu giờ?</h2><div class="grid"><div class="metric"><small>Giờ của ngày cũ rơi khỏi rolling</small><strong id="released">–</strong></div><div class="metric"><small>Ngày mai còn cho IO</small><strong class="green" id="tomorrow">–</strong></div></div><p class="note" id="explain"></p><div class="controls"><button id="next">Xem ngày mai →</button><button class="secondary" id="prev">← Ngày trước</button><button class="secondary" id="today">Hôm nay</button></div></section>
 <section class="card"><h2>Nhập giờ chạy & reserve</h2><details id="flex-manual"><summary style="cursor:pointer;font-weight:700;margin-bottom:10px">Nhập / chỉnh sửa thủ công (mở khi cần)</summary><p class="note">Nhập theo dạng <b>7:46</b> (7 giờ 46 phút). Giờ thực tế và reserve phải là hai phần <b>không trùng nhau</b>. Khi hoàn thành một reserve, chuyển số giờ đó sang cột thực tế và giảm reserve còn lại về 0.</p><div class="controls"><button class="secondary" id="add">+ Thêm ngày</button><button class="secondary" id="seed">Khôi phục dữ liệu mẫu</button><button class="danger" id="clear">Xóa tất cả</button></div><div class="smalltitle">Ngày · Giờ đã chạy · Giờ reserve chưa chạy</div><div id="flex-out-controls"><label><input id="flex-hide-out" type="checkbox" checked> Ẩn ngày đã OUT</label><span id="flex-out-count" aria-live="polite"></span></div><div id="entries"></div><p class="muted">Dữ liệu được lưu tự động trên trình duyệt thiết bị này. Không cần đăng nhập.</p></details></section>
 
 <section class="card" id="flex-upgrade"><h2>Upload ảnh & Lịch sử</h2><p class="note">Nhập nhiều ảnh Amazon Flex Completed hoặc Reserve. Kiểm tra ngày và giờ trước khi lưu; dữ liệu tự cập nhật vào Rolling 7 Days.</p>
-<div class="flex-tools"><button id="flex-upload">📷 Upload ảnh</button><button class="secondary" id="flex-history-toggle">🕘 Lịch sử</button></div>
+<div class="flex-tools"><button id="flex-upload">📷 Upload ảnh</button><button id="flex-zero" class="secondary">Chốt ngày 0h</button><button class="secondary" id="flex-history-toggle">🕘 Lịch sử</button></div>
 <input id="flex-images" type="file" accept="image/*" multiple hidden>
 <div id="flex-review-panel" class="flex-panel" hidden><b>Kiểm tra các block trước khi lưu</b><p id="flex-ocr-status" class="flex-status"></p><div id="flex-review-list"></div><div class="controls" style="margin-top:12px"><button id="flex-save-blocks">Lưu các block hợp lệ</button><button class="secondary" id="flex-cancel-review">Hủy</button></div></div>
 <details class="flex-panel" id="flex-reserve-panel"><summary>Reserve chưa chạy (<span id="flex-reserve-count">0</span>)</summary><div id="flex-reserve-list"></div></details>
@@ -117,10 +123,52 @@ const dur=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
 const safeDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(new Date(s+'T12:00:00').valueOf());
 const stamp=b=>[b.kind,b.date,b.start,b.end].join('|');
 const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
-function saveLocal(){localStorage.setItem(BLOCKKEY,JSON.stringify(records));renderExtra()}
-function applyDiff(oldRows,newRows){const data=get(),deltas={};for(const b of oldRows){if(!deltas[b.date])deltas[b.date]={a:0,r:0};deltas[b.date][b.kind]-=minutes(b.start,b.end)}for(const b of newRows){if(!deltas[b.date])deltas[b.date]={a:0,r:0};deltas[b.date][b.kind]+=minutes(b.start,b.end)}for(const [date,d] of Object.entries(deltas)){let item=data[date]||{a:0,r:0};for(const k of ['a','r'])item[k]=Math.max(0,(Number(item[k])||0)+d[k]);data[date]=item}localStorage.setItem(KEY,JSON.stringify(data));if(window.flexRefresh)window.flexRefresh();else document.getElementById('day').dispatchEvent(new Event('change'))}
-function addBlocks(newRows){const unique=[],dupes=[];const known=new Set(records.map(stamp));for(const b of newRows){if(known.has(stamp(b))){dupes.push(b);continue}known.add(stamp(b));unique.push({...b,id:uid(),updatedAt:new Date().toISOString()})}if(unique.length){applyDiff([],unique);records.push(...unique);saveLocal();queueSync()}return {added:unique.length,duplicates:dupes.length}}
-function removeBlock(id){let b=records.find(x=>x.id===id);if(!b||!confirm('Xóa block '+b.date+' '+b.start+'–'+b.end+'?'))return;applyDiff([b],[]);records=records.filter(x=>x.id!==id);saveLocal();queueSync()}
+const BASEKEY='flex-baseline-v1',SETTLEDKEY='flex-settled-days-v1';
+const loadObject=(key)=>{try{const v=JSON.parse(localStorage.getItem(key));return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch{return {}}};
+let baseline=loadObject(BASEKEY),settled=loadObject(SETTLEDKEY),pendingEarnings=new Set();
+const clockOK=s=>/^([01]\d|2[0-3]):[0-5]\d$/.test(s||'');
+function saveLocal(){localStorage.setItem(BLOCKKEY,JSON.stringify(records));localStorage.setItem(BASEKEY,JSON.stringify(baseline));localStorage.setItem(SETTLEDKEY,JSON.stringify(settled));renderExtra();queueSync()}
+function captureBaseline(date){if(!Object.prototype.hasOwnProperty.call(baseline,date)){const d=get()[date]||{a:0,r:0};baseline[date]={a:Number(d.a)||0,r:Number(d.r)||0}}}
+function rebuildDates(dates){const data=get();for(const date of new Set(dates)){captureBaseline(date);const rows=records.filter(b=>b.date===date),a=rows.filter(b=>b.kind==='a').reduce((n,b)=>n+minutes(b.start,b.end),0),r=rows.filter(b=>b.kind==='r').reduce((n,b)=>n+minutes(b.start,b.end),0);if(settled[date])data[date]={a,r:0};else data[date]={a:Math.max(baseline[date].a,a),r:Math.max(baseline[date].r,r)}}localStorage.setItem(KEY,JSON.stringify(data));window.flexRefresh?.()}
+function addBlocks(newRows,earningsDates=new Set()){
+ const affected=new Set(),old=get(),added=[];let duplicates=0,converted=0,canceled=0;
+ const byDate={};for(const b of newRows)(byDate[b.date]??=[]).push(b);
+ // Save a local rollback snapshot before every real import.
+ const snapshot=()=>{const payload={version:3,entries:old,blocks:records,baseline,settled};localStorage.setItem('flex-pre-import-snapshot-v1',JSON.stringify(payload))};
+ let changed=false;
+ for(const date of Object.keys(byDate)){
+  const rows=[...new Map(byDate[date].map(b=>[b.kind+'|'+b.start+'|'+b.end,b])).values()];
+  captureBaseline(date);affected.add(date);
+  if(earningsDates.has(date)){
+   const completed=rows.filter(b=>b.kind==='a');if(!completed.length)continue;
+   if(!changed){snapshot();changed=true}
+   const wanted=new Set(completed.map(b=>b.start+'|'+b.end));
+   for(const b of records.filter(b=>b.date===date)){
+    if(b.kind==='r'){
+     if(wanted.has(b.start+'|'+b.end)){b.kind='a';converted++}
+     else{b.kind='c';canceled++}
+     b.updatedAt=new Date().toISOString();
+    }
+   }
+   // Earnings is authoritative for the date: remove outdated completed details, keep cancelled history.
+   const oldCompleted=records.filter(b=>b.date===date&&b.kind==='a');
+   const exact=new Map(oldCompleted.map(b=>[b.start+'|'+b.end,b]));
+   records=records.filter(b=>b.date!==date||b.kind!=='a');
+   for(const b of completed){const match=exact.get(b.start+'|'+b.end);records.push(match||{...b,id:uid(),updatedAt:new Date().toISOString()});if(!match){added.push(b)}}
+   settled[date]=new Date().toISOString();
+  }else{
+   if(settled[date])continue; // Do not resurrect reserve on a settled day.
+   for(const b of rows){if(records.some(x=>x.date===date&&x.start===b.start&&x.end===b.end&&x.kind===b.kind)){duplicates++;continue}
+    if(!changed){snapshot();changed=true}
+    records.push({...b,id:uid(),updatedAt:new Date().toISOString()});added.push(b)}
+  }
+ }
+ if(changed){rebuildDates(affected);saveLocal()}
+ return {added:added.length,duplicates,converted,canceled,settled:[...earningsDates].filter(d=>byDate[d]?.some(b=>b.kind==='a'))};
+}
+function removeBlock(id){const b=records.find(x=>x.id===id);if(!b||!confirm('Xóa block '+b.date+' '+b.start+'–'+b.end+'?'))return;captureBaseline(b.date);if(b.kind==='r')baseline[b.date].r=0;if(b.kind==='a')baseline[b.date].a=0;records=records.filter(x=>x.id!==id);rebuildDates([b.date]);saveLocal()}
+function undoLastImport(){const raw=localStorage.getItem('flex-pre-import-snapshot-v1');if(!raw){alert('Chưa có bản ghi để hoàn tác.');return}if(!confirm('Hoàn tác lần upload/chốt ngày gần nhất? Dữ liệu mới nhập sau đó có thể bị thay thế.'))return;try{const snap=JSON.parse(raw);if(!snap.entries||!Array.isArray(snap.blocks))throw Error('Snapshot không hợp lệ');localStorage.setItem(KEY,JSON.stringify(snap.entries));records=snap.blocks;baseline=snap.baseline||{};settled=snap.settled||{};localStorage.setItem(BLOCKKEY,JSON.stringify(records));localStorage.setItem(BASEKEY,JSON.stringify(baseline));localStorage.setItem(SETTLEDKEY,JSON.stringify(settled));localStorage.removeItem('flex-pre-import-snapshot-v1');window.flexRefresh?.();renderExtra();queueSync();alert('Đã hoàn tác lần nhập ảnh gần nhất.')}catch(err){alert('Không thể hoàn tác: '+err.message)}}
+function settleZeroDay(){const date=prompt('Ngày không có chuyến hoàn thành (YYYY-MM-DD):',$('day').value);if(!date)return;if(!safeDate(date)){alert('Ngày không hợp lệ.');return}if(!confirm('Chốt '+date+' với 0 giờ thực tế và hủy toàn bộ Reserve chưa chạy của ngày này?'))return;captureBaseline(date);localStorage.setItem('flex-pre-import-snapshot-v1',JSON.stringify({version:3,entries:get(),blocks:records,baseline,settled}));for(const b of records.filter(x=>x.date===date&&x.kind==='r'))b.kind='c';records=records.filter(b=>b.date!==date||b.kind!=='a');settled[date]=new Date().toISOString();rebuildDates([date]);saveLocal()}
 function renderExtra(){
  const reserves=records.filter(b=>b.kind==='r').sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
  $('flex-reserve-count').textContent=reserves.length;
@@ -157,7 +205,7 @@ function renderExtra(){
    summary.textContent=displayDate(date)+' · '+dur(a)+' Completed · '+group[date].length+' block';day.append(summary);
    for(const b of group[date].sort((x,y)=>x.start.localeCompare(y.start))){
      const row=document.createElement('div');row.className='flex-item';
-     const t=document.createElement('span');t.textContent=(b.kind==='a'?'Completed':'Reserve')+' · '+displayTime(b.start)+' – '+displayTime(b.end)+' · '+dur(minutes(b.start,b.end));
+     const t=document.createElement('span');t.textContent=(b.kind==='a'?'Completed':b.kind==='c'?'Đã hủy':'Reserve')+' · '+displayTime(b.start)+' – '+displayTime(b.end)+' · '+dur(minutes(b.start,b.end));
      const actions=document.createElement('div');actions.className='controls';
      const edit=document.createElement('button');edit.className='secondary';edit.textContent='Sửa';edit.onclick=()=>editBlock(b.id);
      const del=document.createElement('button');del.className='danger';del.textContent='Xóa';del.onclick=()=>removeBlock(b.id);
@@ -168,19 +216,69 @@ function renderExtra(){
 }
 function displayDate(d){return d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4)}
 function displayTime(t){const [h,m]=t.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+(h>=12?' PM':' AM')}
-function editBlock(id){const old=records.find(b=>b.id===id);if(!old)return;let date=prompt('Ngày YYYY-MM-DD',old.date);if(date===null)return;let start=prompt('Bắt đầu HH:MM (24h)',old.start);if(start===null)return;let end=prompt('Kết thúc HH:MM (24h)',old.end);if(end===null)return;let kind=prompt('Loại: a = Completed, r = Reserve',old.kind);if(kind===null)return;const updated={...old,date,start,end,kind,updatedAt:new Date().toISOString()};if(!safeDate(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||!['a','r'].includes(kind)||!(minutes(start,end)>0)){alert('Ngày, giờ hoặc loại block không hợp lệ.');return}if(records.some(b=>b.id!==id&&stamp(b)===stamp(updated))){alert('Block này đã tồn tại.');return}applyDiff([old],[updated]);records=records.map(b=>b.id===id?updated:b);saveLocal();queueSync()}
+function editBlock(id){const old=records.find(b=>b.id===id);if(!old)return;let date=prompt('Ngày YYYY-MM-DD',old.date);if(date===null)return;let start=prompt('Bắt đầu HH:MM (24h)',old.start);if(start===null)return;let end=prompt('Kết thúc HH:MM (24h)',old.end);if(end===null)return;let kind=prompt('Loại: a = Completed, r = Reserve, c = Đã hủy',old.kind);if(kind===null)return;const updated={...old,date,start,end,kind,updatedAt:new Date().toISOString()};if(!safeDate(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||!['a','r','c'].includes(kind)||!(minutes(start,end)>0)){alert('Ngày, giờ hoặc loại block không hợp lệ.');return}if(records.some(b=>b.id!==id&&stamp(b)===stamp(updated))){alert('Block này đã tồn tại.');return}captureBaseline(old.date);captureBaseline(date);baseline[old.date]={a:0,r:0};baseline[date]={a:0,r:0};records=records.map(b=>b.id===id?updated:b);rebuildDates([old.date,date]);saveLocal()}
+$('flex-zero').onclick=settleZeroDay;$('flex-undo').onclick=undoLastImport;
 $('flex-history-toggle').onclick=()=>{$('flex-history-panel').hidden=!$('flex-history-panel').hidden;renderExtra()};$('flex-month').value=iso(new Date()).slice(0,7);$('flex-month').onchange=()=>{$('flex-date-filter').value='';renderExtra()};$('flex-date-filter').onchange=renderExtra;
-$('flex-upload').onclick=()=>$('flex-images').click();$('flex-cancel-review').onclick=()=>{$('flex-review-panel').hidden=true;pending=[]};
+$('flex-upload').onclick=()=>$('flex-images').click();$('flex-cancel-review').onclick=()=>{$('flex-review-panel').hidden=true;pendingEarnings=new Set()};
 const normalizeTime=(h,m,ampm)=>{h=Number(h);m=Number(m);if(h>23||m>59)return null;if(ampm){if(h<1||h>12)return null;h=h%12+(ampm.toUpperCase()==='PM'?12:0)}return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')};
-function parseImageText(text){const rows=[];let date=null;let dateMatch=text.match(/\b(20\d\d)[\/-](\d{1,2})[\/-](\d{1,2})\b/);if(dateMatch)date=`${dateMatch[1]}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}`;
-if(!date){dateMatch=text.match(/\b(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)?\s*,?\s*(?:Oct(?:ober)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2}(?:,?\s+20\d\d)?\b/i);if(dateMatch){const m=dateMatch[0].match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,?\s+(20\d\d))?/i);if(m&&m[3])date=m[3]+'-'+String(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(m[1].slice(0,3))+1).padStart(2,'0')+'-'+m[2].padStart(2,'0')}}
-const times=[...text.matchAll(/\b(\d{1,2}):(\d{2})\s*(AM|PM)?\b/gi)].map(m=>({start:m.index,end:m.index+m[0].length,value:normalizeTime(m[1],m[2],m[3]),ampm:m[3]})).filter(t=>t.value);
-// Only pair adjacent time tokens. Review is mandatory; unknown dates stay blank.
-for(let i=0;i+1<times.length;i+=2){let a=times[i],b=times[i+1];if(!a.ampm&&!b.ampm)continue;let start=a.value,end=b.value;if(!a.ampm&&b.ampm){let [h,mm]=start.split(':').map(Number);start=normalizeTime(h,mm,b.ampm)}if(a.ampm&&!b.ampm){let [h,mm]=end.split(':').map(Number);end=normalizeTime(h,mm,a.ampm)}rows.push({date:date||'',start,end,kind:/\b(earnings|completed|payment)\b/i.test(text)?'a':'r'})}
-return rows}
-function reviewRow(b){let row=document.createElement('div');row.className='flex-review';const field=(label,type,value,cl)=>{let wrap=document.createElement('div');wrap.className=cl||'';let lab=document.createElement('label');lab.textContent=label;let el=document.createElement('input');el.type=type;el.value=value||'';wrap.append(lab,el);row.append(wrap);return el};let date=field('Ngày','date',b.date,'flex-date'),start=field('Bắt đầu','time',b.start),end=field('Kết thúc','time',b.end);let wrap=document.createElement('div');let lab=document.createElement('label');lab.textContent='Loại';let kind=document.createElement('select');kind.innerHTML='<option value="a">Completed</option><option value="r">Reserve</option>';kind.value=b.kind;wrap.append(lab,kind);row.append(wrap);let remove=document.createElement('button');remove.className='danger flex-remove';remove.textContent='Bỏ';remove.onclick=()=>row.remove();row.append(remove);row.extract=()=>({date:date.value,start:start.value,end:end.value,kind:kind.value});$('flex-review-list').append(row)}
-$('flex-images').onchange=async e=>{let files=[...e.target.files];if(!files.length)return;$('flex-review-panel').hidden=false;$('flex-review-list').replaceChildren();$('flex-ocr-status').textContent='Đang đọc '+files.length+' ảnh. Cần internet để tải công cụ OCR lần đầu…';try{if(!window.Tesseract){await new Promise((resolve,reject)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s)})}let found=0;for(let i=0;i<files.length;i++){$('flex-ocr-status').textContent=`Đang đọc ảnh ${i+1}/${files.length}: ${files[i].name}`;let result=await Tesseract.recognize(files[i],'eng');let matches=parseImageText(result.data.text);for(let b of matches){reviewRow(b);found++}}$('flex-ocr-status').textContent=found?`Đã nhận diện ${found} cặp giờ. Hãy kiểm tra kỹ từng ngày, giờ và loại block trước khi lưu. Ngày không rõ sẽ để trống.`:'Không đọc được cặp giờ rõ ràng. Bạn có thể thêm block bằng nút bên dưới.'}catch(err){$('flex-ocr-status').textContent='Không tải được OCR: '+err.message+'. Bạn vẫn có thể thêm block thủ công.'}let add=document.createElement('button');add.className='secondary';add.textContent='+ Thêm block để kiểm tra';add.onclick=()=>reviewRow({date:'',start:'',end:'',kind:'a'});$('flex-review-list').append(add);e.target.value=''};
-$('flex-save-blocks').onclick=()=>{const rows=[...$('flex-review-list').querySelectorAll('.flex-review')].map(x=>x.extract());if(!rows.length){alert('Chưa có block để lưu.');return}for(const b of rows){if(!safeDate(b.date)||!/^\d\d:\d\d$/.test(b.start)||!/^\d\d:\d\d$/.test(b.end)||!(minutes(b.start,b.end)>0)){alert('Kiểm tra lại ngày và giờ: phải có ngày rõ ràng, giờ kết thúc sau giờ bắt đầu.');return}}let result=addBlocks(rows);alert(`Đã lưu ${result.added} block; bỏ qua ${result.duplicates} block trùng.`);$('flex-review-panel').hidden=true};
+function inferDate(month,day,year,weekday){
+ const now=new Date(),candidates=[];for(const y of year?[Number(year)]:[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1]){
+  const d=new Date(y,Number(month)-1,Number(day),12);if(d.getMonth()!==Number(month)-1||d.getDate()!==Number(day))continue;
+  if(weekday&&d.getDay()!==['sun','mon','tue','wed','thu','fri','sat'].indexOf(weekday.toLowerCase().slice(0,3)))continue;
+  candidates.push({date:iso(d),distance:Math.abs(d.getTime()-now.getTime())});
+ }
+ candidates.sort((a,b)=>a.distance-b.distance);return candidates.length&&candidates[0].distance<400*86400000?candidates[0].date:'';
+}
+function dateInLine(line){
+ let m=line.match(/\b(20\d\d)[\/-](\d{1,2})[\/-](\d{1,2})\b/);if(m)return inferDate(m[2],m[3],m[1]);
+ const wd='(?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)';
+ m=line.match(new RegExp('\\b('+wd+')?\\s*,?\\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\\s+(\\d{1,2})(?:,?\\s+(20\\d\\d))?\\b','i'));
+ if(m){const month=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].slice(0,3).toLowerCase())+1;return inferDate(month,m[3],m[4],m[1])}
+ m=line.match(new RegExp('\\b('+wd+')\\s*,?\\s*(\\d{1,2})[\\/-](\\d{1,2})(?:[\\/-](20\\d\\d))?\\b','i'));
+ if(m)return inferDate(m[2],m[3],m[4],m[1]);
+ return '';
+}
+function parseImageText(text){
+ const isEarnings=/\b(earnings|tips pending|instant cash out|completed deliveries|payment)\b/i.test(text);
+ const isSchedule=/\b(your schedule|scheduled to deliver|upcoming offers)\b/i.test(text);
+ const kind=isSchedule?'r':isEarnings?'a':'r',rows=[];
+ const lines=String(text).replace(/[–—−]/g,'-').split(/\n/).map(x=>x.trim()).filter(Boolean);
+ let date='',dateContext='',skip=false;
+ const token=/\b(\d{1,2}):(\d{2})\s*(AM|PM)\b/gi;
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i],foundDate=dateInLine(line);
+  if(foundDate){date=foundDate;dateContext=line;skip=/instant cash out|payment issued|transfer|cash out/i.test(line)}
+  if(/instant cash out|payment issued|transfer complete/i.test(line)){skip=true;continue}
+  if(/scheduled to deliver|delivery block|deliveries|tips pending|completed/i.test(line))skip=false;
+  if(skip)continue;
+  const times=[...line.matchAll(token)].map(m=>({h:m[1],m:m[2],ampm:m[3]}));
+  // A block must have two explicit AM/PM times on the same line, or two consecutive time-only lines.
+  if(times.length>=2){for(let j=0;j+1<times.length;j+=2){const start=normalizeTime(times[j].h,times[j].m,times[j].ampm),end=normalizeTime(times[j+1].h,times[j+1].m,times[j+1].ampm);if(start&&end&&minutes(start,end)>0&&minutes(start,end)<=720)rows.push({date,start,end,kind})}continue}
+  if(times.length===1&&i+1<lines.length){const next=[...lines[i+1].matchAll(token)];if(next.length===1&&/^\s*\d{1,2}:\d{2}\s*(AM|PM)\s*$/i.test(lines[i])&&/^\s*\d{1,2}:\d{2}\s*(AM|PM)\s*$/i.test(lines[i+1])){const a=times[0],b=next[0],start=normalizeTime(a.h,a.m,a.ampm),end=normalizeTime(b[1],b[2],b[3]);if(start&&end&&minutes(start,end)>0&&minutes(start,end)<=720)rows.push({date,start,end,kind});i++}}
+ }
+ // If OCR drops all date headers, leave blank and require manual date review.
+ return {rows:[...new Map(rows.map(b=>[b.kind+'|'+b.date+'|'+b.start+'|'+b.end,b])).values()],source:isSchedule?'schedule':isEarnings?'earnings':'unknown'};
+}
+function reviewRow(b){let row=document.createElement('div');row.className='flex-review';const field=(label,type,value,cl)=>{let wrap=document.createElement('div');wrap.className=cl||'';let lab=document.createElement('label');lab.textContent=label;let el=document.createElement('input');el.type=type;el.value=value||'';wrap.append(lab,el);row.append(wrap);return el};let date=field('Ngày','date',b.date,'flex-date'),start=field('Bắt đầu','time',b.start),end=field('Kết thúc','time',b.end);let wrap=document.createElement('div');let lab=document.createElement('label');lab.textContent='Loại';let kind=document.createElement('select');kind.innerHTML='<option value="a">Completed</option><option value="r">Reserve</option>';kind.value=b.kind;wrap.append(lab,kind);row.append(wrap);let remove=document.createElement('button');remove.className='danger flex-remove';remove.textContent='Bỏ';remove.onclick=()=>row.remove();row.append(remove);row.extract=()=>({date:date.value,start:start.value,end:end.value,kind:kind.value,source:b.source||'manual'});$('flex-review-list').append(row)}
+$('flex-images').onchange=async e=>{
+ const files=[...e.target.files];if(!files.length)return;pendingEarnings=new Set();$('flex-review-panel').hidden=false;$('flex-review-list').replaceChildren();$('flex-ocr-status').textContent='Đang đọc '+files.length+' ảnh…';
+ try{if(!window.Tesseract){await new Promise((resolve,reject)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s)})}
+  let found=0,unknown=0;for(let i=0;i<files.length;i++){$('flex-ocr-status').textContent=`Đang đọc ảnh ${i+1}/${files.length}: ${files[i].name}`;const result=await Tesseract.recognize(files[i],'eng');const parsed=parseImageText(result.data.text);for(const b of parsed.rows){reviewRow({...b,source:parsed.source});found++;if(!b.date)unknown++;if(parsed.source==='earnings'&&b.date)pendingEarnings.add(b.date)} }
+  $('flex-ocr-status').textContent=found?`Đã nhận diện ${found} block (${unknown} chưa rõ ngày). Earnings cuối ngày sẽ chốt tổng giờ và xóa Reserve chưa chạy của đúng ngày. Hãy kiểm tra các dòng trước khi lưu.`:'Chưa nhận diện được block. Có thể thêm block thủ công bên dưới.';
+ }catch(err){$('flex-ocr-status').textContent='OCR lỗi: '+err.message+'. Bạn vẫn có thể nhập block thủ công.'}
+ const add=document.createElement('button');add.className='secondary';add.textContent='+ Thêm block để kiểm tra';add.onclick=()=>reviewRow({date:'',start:'',end:'',kind:'a'});$('flex-review-list').append(add);e.target.value='';
+};
+$('flex-save-blocks').onclick=()=>{
+ const rows=[...$('flex-review-list').querySelectorAll('.flex-review')].map(x=>x.extract());if(!rows.length){alert('Chưa có block để lưu.');return}
+ for(const b of rows){if(!safeDate(b.date)||!clockOK(b.start)||!clockOK(b.end)||!(minutes(b.start,b.end)>0)){alert('Kiểm tra ngày, giờ bắt đầu và kết thúc của từng block.');return}}
+ const earningsDates=new Set(rows.filter(b=>b.source==='earnings'&&b.kind==='a').map(b=>b.date));
+ // OCR date correction: an earnings image with one corrected date should still settle it.
+ if(pendingEarnings.size===1&&earningsDates.size===0&&rows.some(b=>b.kind==='a'))for(const b of rows.filter(b=>b.kind==='a'))earningsDates.add(b.date);
+ const seen=new Set();for(const b of rows){const k=b.date+'|'+b.start+'|'+b.end;if(seen.has(k)){alert('Có block trùng trong ảnh: '+k+'. Hãy bỏ một dòng trước khi lưu.');return}seen.add(k)}
+ // Guard against partial OCR silently reducing previously recorded completed hours.
+ for(const date of earningsDates){const sum=rows.filter(b=>b.date===date&&b.kind==='a').reduce((n,b)=>n+minutes(b.start,b.end),0);const previous=Number(get()[date]?.a)||0;if(sum<previous&&!confirm('Earnings '+date+' nhận diện '+dur(sum)+' nhưng trước đó đã lưu '+dur(previous)+'. Đây có phải danh sách Earnings ĐẦY ĐỦ của ngày này? OK = thay giờ; Cancel = kiểm tra lại.'))return}
+ const result=addBlocks(rows.map(({source,...b})=>b),earningsDates);alert(`Đã lưu ${result.added} block mới; ${result.duplicates} trùng. Chuyển ${result.converted} Reserve sang Completed, loại ${result.canceled} Reserve không chạy. Đã chốt ${result.settled.length} ngày Earnings.`);$('flex-review-panel').hidden=true;pendingEarnings=new Set();
+};
 // Cloud synchronization: one row per user, protected by Supabase RLS. Explicit sign-in only.
 const status=t=>$('flex-sync-status').textContent=t;
 $('flex-supa-url').value=config.url||'';$('flex-supa-key').value=config.key||'';$('flex-email').value=config.email||'';
@@ -190,7 +288,7 @@ $('flex-signup').onclick=async()=>{try{await auth('signup');status('Đã gửi y
 $('flex-login').onclick=async()=>{try{let s=await auth('token?grant_type=password');session=s;status('Đã đăng nhập. Đang đồng bộ…');await sync(true)}catch(e){status('Không thể đăng nhập/đồng bộ: '+e.message)}};
 $('flex-logout').onclick=()=>{session=null;$('flex-password').value='';status('Đã đăng xuất. Dữ liệu trên thiết bị vẫn được giữ.')};
 async function request(path,method,body){if(!session?.access_token)throw Error('Chưa đăng nhập');const c=config;let response=await fetch(c.url+'/rest/v1/'+path,{method,headers:{apikey:c.key,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=representation'},body:body?JSON.stringify(body):undefined});let text=await response.text();if(!response.ok)throw Error(text.slice(0,250));return text?JSON.parse(text):[]}
-let syncing=false;async function sync(initial=false){if(!session||syncing)return;syncing=true;try{const user=session.user?.id;if(!user)throw Error('Không tìm thấy user id');let remote=await request('flex_state?user_id=eq.'+encodeURIComponent(user)+'&select=entries,blocks','GET');if(initial&&remote.length){let cloud=remote[0],local=get();if(!confirm('Tìm thấy dữ liệu trên cloud. Chọn OK để dùng dữ liệu cloud trên thiết bị này; Cancel để giữ dữ liệu trên thiết bị và ghi lên cloud. Hãy sao lưu JSON trước khi thay thế.')){await uploadState(user)}else{localStorage.setItem(KEY,JSON.stringify(cloud.entries||{}));records=Array.isArray(cloud.blocks)?cloud.blocks:[];localStorage.setItem(BLOCKKEY,JSON.stringify(records));status('Đã tải dữ liệu cloud. Đang làm mới ứng dụng…');location.reload();return}}else await uploadState(user);status('Đồng bộ thành công · '+new Date().toLocaleTimeString('vi-VN'))}catch(e){status('Đồng bộ lỗi: '+e.message)}finally{syncing=false}}
+let syncing=false;async function sync(initial=false){if(!session||syncing)return;syncing=true;try{const user=session.user?.id;if(!user)throw Error('Không tìm thấy user id');let remote=await request('flex_state?user_id=eq.'+encodeURIComponent(user)+'&select=entries,blocks','GET');if(initial&&remote.length){let cloud=remote[0],local=get();if(!confirm('Tìm thấy dữ liệu trên cloud. Chọn OK để dùng dữ liệu cloud trên thiết bị này; Cancel để giữ dữ liệu trên thiết bị và ghi lên cloud. Hãy sao lưu JSON trước khi thay thế.')){await uploadState(user)}else{localStorage.setItem(KEY,JSON.stringify(cloud.entries||{}));records=Array.isArray(cloud.blocks)?cloud.blocks:[];localStorage.setItem(BLOCKKEY,JSON.stringify(records));baseline={};settled={};localStorage.removeItem(BASEKEY);localStorage.removeItem(SETTLEDKEY);status('Đã tải dữ liệu cloud. Đang làm mới ứng dụng…');location.reload();return}}else await uploadState(user);status('Đồng bộ thành công · '+new Date().toLocaleTimeString('vi-VN'))}catch(e){status('Đồng bộ lỗi: '+e.message)}finally{syncing=false}}
 async function uploadState(user){await request('flex_state?on_conflict=user_id','POST',{user_id:user,entries:get(),blocks:records,updated_at:new Date().toISOString()})}
 let syncTimer;function queueSync(){if(!session)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(false),1200)}
 // Observe existing app's local persistence so manual edits and backups also sync.
@@ -214,7 +312,7 @@ const cleanBlocks=items=>{
  if(!Array.isArray(items))throw Error('Danh sách block không hợp lệ.');
  const ids=new Set(),stamps=new Set();
  return items.map((item,i)=>{
-  if(!item||!['a','r'].includes(item.kind)||!safeDate(item.date)||!validClock(item.start)||!validClock(item.end)||!(minutes(item.start,item.end)>0))throw Error('Block số '+(i+1)+' không hợp lệ.');
+  if(!item||!['a','r','c'].includes(item.kind)||!safeDate(item.date)||!validClock(item.start)||!validClock(item.end)||!(minutes(item.start,item.end)>0))throw Error('Block số '+(i+1)+' không hợp lệ.');
   const id=typeof item.id==='string'&&item.id.length<200&&item.id?item.id:uid();
   const mark=stamp(item);
   if(ids.has(id)||stamps.has(mark))throw Error('File chứa block trùng lặp: '+mark);
@@ -224,7 +322,7 @@ const cleanBlocks=items=>{
 };
 function exportFullBackup(){
  try{
-  const payload={version:BACKUP_VERSION,app:'flex-rolling-7-days',exportedAt:new Date().toISOString(),entries:cleanEntries(get()),blocks:cleanBlocks(records),preferences:{cap:Number($('cap').value)||40,selectedDay:$('day').value}};
+  const payload={version:BACKUP_VERSION,app:'flex-rolling-7-days',exportedAt:new Date().toISOString(),entries:cleanEntries(get()),blocks:cleanBlocks(records),baseline,settledDates:settled,preferences:{cap:Number($('cap').value)||40,selectedDay:$('day').value}};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download='flex-rolling-full-backup-v3-'+iso(new Date())+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
  }catch(err){alert('Không thể sao lưu: '+err.message)}
@@ -236,7 +334,7 @@ async function importFullBackup(file){
   const payload=JSON.parse(await file.text());
   if(!payload||![2,3].includes(Number(payload.version)))throw Error('Chỉ hỗ trợ bản sao JSON v2 hoặc v3.');
   const restoredEntries=cleanEntries(payload.entries);
-  const restoredBlocks=Number(payload.version)===3?cleanBlocks(payload.blocks):[];
+  const restoredBlocks=Number(payload.version)===3?cleanBlocks(payload.blocks):[];const restoredBaseline=payload.baseline&&typeof payload.baseline==='object'&&!Array.isArray(payload.baseline)?payload.baseline:{};const restoredSettled=payload.settledDates&&typeof payload.settledDates==='object'&&!Array.isArray(payload.settledDates)?payload.settledDates:{};
   const pref=payload.preferences||{};
   const cap=Number(pref.cap),day=pref.selectedDay;
   const message='Khôi phục JSON v'+payload.version+' với '+Object.keys(restoredEntries).length+' ngày và '+restoredBlocks.length+' block.\n\nDữ liệu giờ chạy, Reserve và lịch sử hiện tại trên thiết bị sẽ bị THAY THẾ. Hãy sao lưu bản hiện tại trước.\n\n'+(Number(payload.version)===2?'Lưu ý: JSON v2 không chứa lịch sử từng block; lịch sử hiện tại sẽ bị thay thế bằng danh sách trống.\n\n':'')+(session?'Bạn đang đăng nhập Supabase: bản khôi phục có thể được tải lên cloud ở lần đồng bộ tiếp theo.\n\n':'')+'Tiếp tục?';
