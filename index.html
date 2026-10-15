@@ -93,6 +93,21 @@ input,select,button{max-width:100%;min-width:0}
 .flex-review input,.flex-review select{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;font-size:16px!important}
 .flex-review .flex-remove{grid-column:1/-1;width:100%}
 @media(max-width:380px){.flex-review{grid-template-columns:minmax(0,1fr)!important}.flex-review .flex-date,.flex-review .flex-remove{grid-column:1}}
+
+/* iPhone fix: month picker must stay inside history panel */
+#flex-history-panel{overflow:hidden;}
+#flex-history-panel label{display:block;max-width:100%;}
+#flex-history-panel input[type=month],
+#flex-history-panel select{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+#flex-month{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;font-size:16px;line-height:1.2;padding:12px 14px;border:1px solid #c8d9e4;border-radius:12px;background:#fff;overflow:hidden;}
+@supports (-webkit-touch-callout:none){
+  #flex-month{width:calc(100% - 2px);}
+}
+@media(max-width:430px){
+  #flex-month{font-size:15px;padding:11px 12px;}
+  #flex-history-panel{padding:12px 10px;}
+}
+
 </style><style id="auto-today-styles">.auto-today-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;min-height:30px}.auto-today-text{display:flex;align-items:center;gap:7px;margin:0;font-size:12px;font-weight:600;white-space:nowrap}.auto-today-text span{font-size:10px;opacity:.7}.auto-today-switch{position:relative;display:inline-block;width:43px;height:25px;flex:none}.auto-today-switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}.auto-today-track{display:block;width:43px;height:25px;background:#a6adb5;border-radius:20px;transition:background .2s;pointer-events:none}.auto-today-track:after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;background:white;border-radius:50%;box-shadow:0 1px 3px #0003;transition:transform .2s}#auto-today:checked+.auto-today-track{background:#30c76a}#auto-today:checked+.auto-today-track:after{transform:translateX(18px)}#auto-today:focus-visible+.auto-today-track{outline:2px solid #2563eb;outline-offset:3px}</style>
 <style id="date-picker-ui-patch">
 
@@ -109,6 +124,21 @@ input,select,button{max-width:100%;min-width:0}
 #flex-month{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;font-size:16px!important;overflow:hidden!important}
 #flex-month::-webkit-date-and-time-value{min-width:0;text-align:left}
 #flex-month::-webkit-datetime-edit{min-width:0;max-width:100%;padding:0}
+
+
+/* iPhone fix: month picker must stay inside history panel */
+#flex-history-panel{overflow:hidden;}
+#flex-history-panel label{display:block;max-width:100%;}
+#flex-history-panel input[type=month],
+#flex-history-panel select{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;}
+#flex-month{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;font-size:16px;line-height:1.2;padding:12px 14px;border:1px solid #c8d9e4;border-radius:12px;background:#fff;overflow:hidden;}
+@supports (-webkit-touch-callout:none){
+  #flex-month{width:calc(100% - 2px);}
+}
+@media(max-width:430px){
+  #flex-month{font-size:15px;padding:11px 12px;}
+  #flex-history-panel{padding:12px 10px;}
+}
 
 </style>
 </head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
