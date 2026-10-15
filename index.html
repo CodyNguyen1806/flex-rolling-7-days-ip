@@ -312,7 +312,16 @@ main > section.card:first-of-type > .grid:first-child{
   text-overflow:ellipsis;
 }
 
-</style></head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
+</style>
+<style>
+/* Reserve status actions: wrap cleanly on narrow phones without changing global controls. */
+.flex-reserve-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.flex-reserve-actions button{font-size:12px;padding:8px 9px;white-space:normal}
+.flex-reserve-day-actions{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}
+.flex-reserve-day-actions button{font-size:12px;padding:9px 10px}
+@media(max-width:460px){#flex-reserve-list .flex-item{align-items:flex-start}.flex-reserve-actions{justify-content:flex-start}}
+</style>
+</head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
 <section class="card"><div class="grid"><div><label for="day">Ngày cần kiểm tra</label><div class="weekday-check-date"><span id="weekday-check-label" aria-hidden="true"></span><input id="day" type="date" aria-label="Ngày cần kiểm tra"></div><div class="auto-today-row"><label class="auto-today-text" for="auto-today">Auto Today <span id="auto-today-state">ON</span></label><label class="auto-today-switch"><input id="auto-today" type="checkbox" checked aria-label="Tự động chọn hôm nay"><span class="auto-today-track"></span></label></div></div><div><label for="cap">Giới hạn rolling (giờ)</label><input id="cap" type="number" min="1" max="168" step="0.5" value="40"></div></div><div class="grid" style="margin-top:12px"><div class="metric"><small>Đã chạy trong 7 ngày</small><strong id="used">–</strong></div><div class="metric"><small>Còn trước reserve hôm nay</small><strong class="green" id="free">–</strong></div><div class="metric"><small>Reserve hôm nay</small><strong id="reserved">–</strong></div><div class="metric"><small>Còn cho IO hôm nay</small><strong class="green" id="io">–</strong></div></div><div class="bar"><span id="bar"></span></div><div class="muted" id="window"></div><div class="hint" id="warning" style="margin-top:12px"></div></section>
 <section class="card"><h2>Ngày hôm sau được thêm bao nhiêu giờ?</h2><div class="grid"><div class="metric"><small>Giờ của ngày cũ rơi khỏi rolling</small><strong id="released">–</strong></div><div class="metric"><small>Ngày mai còn cho IO</small><strong class="green" id="tomorrow">–</strong></div></div><p class="note" id="explain"></p><div class="controls"><button id="next">Xem ngày mai →</button><button class="secondary" id="prev">← Ngày trước</button><button class="secondary" id="today">Hôm nay</button></div></section>
 <section class="card"><h2>Nhập giờ chạy & reserve</h2><details id="flex-manual"><summary style="cursor:pointer;font-weight:700;margin-bottom:10px">Nhập / chỉnh sửa thủ công (mở khi cần)</summary><p class="note">Nhập theo dạng <b>7:46</b> (7 giờ 46 phút). Giờ thực tế và reserve phải là hai phần <b>không trùng nhau</b>. Khi hoàn thành một reserve, chuyển số giờ đó sang cột thực tế và giảm reserve còn lại về 0.</p><div class="controls"><span class="flex-add-day-wrap"><button class="secondary" id="add" type="button">+ Thêm ngày</button><input id="flex-add-date-picker" type="date" aria-label="Chọn ngày để thêm" title="Chọn ngày để thêm"></span><button class="secondary" id="seed">Khôi phục dữ liệu mẫu</button><button class="danger" id="clear">Xóa tất cả</button></div><div class="smalltitle">Ngày · Giờ đã chạy · Giờ reserve chưa chạy</div><div id="flex-out-controls"><label><input id="flex-hide-out" type="checkbox" checked> Ẩn ngày đã OUT</label><span id="flex-out-count" aria-live="polite"></span></div><div id="entries"></div><p class="muted">Dữ liệu được lưu tự động trên trình duyệt thiết bị này. Không cần đăng nhập.</p></details></section>
@@ -321,8 +330,8 @@ main > section.card:first-of-type > .grid:first-child{
 <div class="flex-tools"><button id="flex-upload">📷 Upload ảnh</button><button id="flex-zero" class="secondary" title="Chỉ dùng khi cả ngày không chạy chuyến nào">Nghỉ 0h</button><button class="secondary" id="flex-history-toggle">🕘 Lịch sử</button></div>
 <input id="flex-images" type="file" accept="image/*" multiple hidden><p class="muted" style="margin:7px 0 0">Nghỉ 0h: chỉ dùng khi không chạy chuyến nào trong ngày. Nếu có Earnings, chỉ cần Upload ảnh.</p>
 <div id="flex-review-panel" class="flex-panel" hidden><b>Kiểm tra các block trước khi lưu</b><p id="flex-ocr-status" class="flex-status"></p><div id="flex-review-list"></div><div class="controls" style="margin-top:12px"><button id="flex-save-blocks">Lưu các block hợp lệ</button><button class="secondary" id="flex-cancel-review">Hủy</button></div></div>
-<details class="flex-panel" id="flex-reserve-panel"><summary>Reserve chưa chạy (<span id="flex-reserve-count">0</span>)</summary><div id="flex-reserve-list"></div></details>
-<div id="flex-history-panel" class="flex-panel" hidden><div class="controls" style="margin-bottom:12px"><button id="flex-undo" class="secondary" type="button">↶ Hoàn tác upload gần nhất</button></div><label for="flex-month">Chọn tháng</label><input type="month" id="flex-month"><label for="flex-date-filter" style="margin-top:10px">Lọc theo ngày</label><select id="flex-date-filter"><option value="">Tất cả các ngày</option></select><div id="flex-history-total" class="flex-history-total"></div><div id="flex-history-list"></div></div>
+<details class="flex-panel" id="flex-reserve-panel"><summary>Reserve chưa chạy (<span id="flex-reserve-count">0</span>)</summary><p class="muted">Chọn Hoàn thành để chuyển sang giờ đã chạy; Đã hủy để loại khỏi giờ giữ chỗ. Có thể Hoàn tác trong Lịch sử. Nếu chỉ nhập Reserve thủ công, hãy sửa cột Reserve trong bảng nhập giờ.</p><div id="flex-reserve-list"></div><button type="button" class="secondary" id="flex-reserve-undo" style="margin-top:10px">↶ Hoàn tác thay đổi gần nhất</button></details>
+<div id="flex-history-panel" class="flex-panel" hidden><div class="controls" style="margin-bottom:12px"><button id="flex-undo" class="secondary" type="button">↶ Hoàn tác sửa / upload gần nhất</button></div><label for="flex-month">Chọn tháng</label><input type="month" id="flex-month"><label for="flex-date-filter" style="margin-top:10px">Lọc theo ngày</label><select id="flex-date-filter"><option value="">Tất cả các ngày</option></select><div id="flex-history-total" class="flex-history-total"></div><div id="flex-history-list"></div></div>
 <details class="flex-panel"><summary>Đồng bộ iPhone & Samsung (Supabase, tùy chọn)</summary><p class="note">Cần thiết lập Supabase và chính sách bảo mật RLS trước. Không dùng mật khẩu Amazon Flex.</p><label>Supabase Project URL</label><input id="flex-supa-url" placeholder="https://xxxxx.supabase.co" autocomplete="off"><label style="margin-top:8px">Publishable / anon key (không dùng service_role)</label><input id="flex-supa-key" placeholder="sb_publishable_..." autocomplete="off"><label style="margin-top:8px">Email</label><input id="flex-email" type="email" autocomplete="username"><label style="margin-top:8px">Mật khẩu Supabase</label><input id="flex-password" type="password" autocomplete="current-password"><div class="flex-tools"><button id="flex-signup" class="secondary">Tạo tài khoản</button><button id="flex-login">Đăng nhập & đồng bộ</button><button id="flex-logout" class="secondary">Đăng xuất</button></div><div id="flex-sync-status" class="flex-status">Chưa kết nối. Dữ liệu vẫn lưu trên thiết bị.</div></details>
 </section>
 <section class="card"><h2>Dự báo 14 ngày tới</h2><p class="note">Dự báo giả sử bạn không chạy thêm IO mới ngoài các giờ đã nhập. Giờ reserve được giữ chỗ khi tính số giờ IO còn lại.</p><div style="overflow-x:auto"><table class="forecast"><thead><tr><th>Ngày</th><th>Thực tế 7N</th><th>Reserve 7N</th><th>IO còn*</th><th>Giờ rơi ra ngày sau</th></tr></thead><tbody id="forecast"></tbody></table></div><p class="muted">* IO còn = giới hạn − giờ thực tế 7 ngày − tất cả reserve chưa chạy trong cửa sổ 7 ngày (ước tính thận trọng). Chỉ tiêu riêng ngày có thể khác do giới hạn/ngày và cách Amazon xét block tương lai.</p></section>
@@ -439,7 +448,7 @@ function addBlocks(newRows,earningsDates=new Set()){
     if(!changed){snapshot();changed=true}
     delete settled[date]; // A future date could not have valid final Earnings.
    }
-   for(const b of rows){if(records.some(x=>x.date===date&&x.start===b.start&&x.end===b.end&&x.kind===b.kind)){duplicates++;continue}
+   for(const b of rows){if(records.some(x=>x.date===date&&x.start===b.start&&x.end===b.end&&(x.kind===b.kind||(b.kind==='r'&&['a','c'].includes(x.kind))))){duplicates++;continue}
     if(!changed){snapshot();changed=true}
     if(b.kind==='r'&&baseline[date])delete baseline[date].manualReserveOverride;
     records.push({...b,id:uid(),updatedAt:new Date().toISOString()});added.push(b)}
@@ -448,8 +457,47 @@ function addBlocks(newRows,earningsDates=new Set()){
  if(changed){rebuildDates(affected);saveLocal()}
  return {added:added.length,duplicates,converted,canceled,settled:[...earningsDates].filter(d=>byDate[d]?.some(b=>b.kind==='a'))};
 }
+// Reserve status transitions use an undo snapshot and never add a block twice.
+function changeReserveStatus(ids,kind){
+ if(!['a','c'].includes(kind))return;
+ const selected=records.filter(b=>b.kind==='r'&&ids.includes(b.id));
+ if(!selected.length){alert('Không tìm thấy Reserve chưa chạy. Vui lòng tải lại trang.');return}
+ const dates=[...new Set(selected.map(b=>b.date))];
+ const total=selected.reduce((sum,b)=>sum+minutes(b.start,b.end),0);
+ const verb=kind==='a'?'Hoàn thành':'Đã hủy';
+ if(!confirm(verb+' '+selected.length+' Reserve ('+dur(total)+') ngày '+dates.map(displayDate).join(', ')+'?\n\n'+(kind==='a'?'Giờ được chuyển sang Đã chạy, không cộng trùng với số giờ đã nhập.':'Các giờ Reserve này sẽ không tính vào Rolling. Giờ đã chạy được giữ nguyên.')+'\nCó thể hoàn tác trong Lịch sử.'))return;
+ // Snapshot data before any edit. Matches the existing import undo format (JSON v3).
+ localStorage.setItem('flex-pre-import-snapshot-v1',JSON.stringify({version:3,entries:get(),blocks:records,baseline,settled}));
+ const before=get();
+ for(const date of dates){
+   captureBaseline(date);
+   // A historical baseline must never resurrect a Reserve after status change.
+   baseline[date].r=0;
+   delete baseline[date].manualReserveOverride;
+   baseline[date].a=Math.max(Number(baseline[date].a)||0,Number(before[date]?.a)||0);
+ }
+ const now=new Date().toISOString();
+ for(const b of selected){
+   if(kind==='a'&&records.some(x=>x.id!==b.id&&x.date===b.date&&x.start===b.start&&x.end===b.end&&x.kind==='a')){
+     // OCR already saved this exact Completed block: don't double-count it.
+     records=records.filter(x=>x.id!==b.id);
+   }else{
+     b.kind=kind;
+     b.updatedAt=now;
+   }
+ }
+ rebuildDates(dates);
+ // A finalized Earnings day can include manual IO not represented by its block list.
+ // Preserve an existing larger Completed total without ever adding the same hours twice.
+ const next=get();let corrected=false;
+ for(const date of dates){const oldA=Number(before[date]?.a)||0;
+   if((Number(next[date]?.a)||0)<oldA){next[date]={...(next[date]||{}),a:oldA};corrected=true}
+ }
+ if(corrected){localStorage.setItem(KEY,JSON.stringify(next));window.flexRefresh?.()}
+ saveLocal();
+}
 function removeBlock(id){const b=records.find(x=>x.id===id);if(!b||!confirm('Xóa block '+b.date+' '+b.start+'–'+b.end+'?'))return;captureBaseline(b.date);if(b.kind==='r')baseline[b.date].r=0;if(b.kind==='a')baseline[b.date].a=0;records=records.filter(x=>x.id!==id);rebuildDates([b.date]);saveLocal()}
-function undoLastImport(){const raw=localStorage.getItem('flex-pre-import-snapshot-v1');if(!raw){alert('Chưa có bản ghi để hoàn tác.');return}if(!confirm('Hoàn tác lần upload/chốt ngày gần nhất? Dữ liệu mới nhập sau đó có thể bị thay thế.'))return;try{const snap=JSON.parse(raw);if(!snap.entries||!Array.isArray(snap.blocks))throw Error('Snapshot không hợp lệ');localStorage.setItem(KEY,JSON.stringify(snap.entries));records=snap.blocks;baseline=snap.baseline||{};settled=snap.settled||{};localStorage.setItem(BLOCKKEY,JSON.stringify(records));localStorage.setItem(BASEKEY,JSON.stringify(baseline));localStorage.setItem(SETTLEDKEY,JSON.stringify(settled));localStorage.removeItem('flex-pre-import-snapshot-v1');window.flexRefresh?.();renderExtra();queueSync();alert('Đã hoàn tác lần nhập ảnh gần nhất.')}catch(err){alert('Không thể hoàn tác: '+err.message)}}
+function undoLastImport(){const raw=localStorage.getItem('flex-pre-import-snapshot-v1');if(!raw){alert('Chưa có bản ghi để hoàn tác.');return}if(!confirm('Hoàn tác lần sửa Reserve/upload/chốt ngày gần nhất? Dữ liệu mới nhập sau đó có thể bị thay thế.'))return;try{const snap=JSON.parse(raw);if(!snap.entries||!Array.isArray(snap.blocks))throw Error('Snapshot không hợp lệ');localStorage.setItem(KEY,JSON.stringify(snap.entries));records=snap.blocks;baseline=snap.baseline||{};settled=snap.settled||{};localStorage.setItem(BLOCKKEY,JSON.stringify(records));localStorage.setItem(BASEKEY,JSON.stringify(baseline));localStorage.setItem(SETTLEDKEY,JSON.stringify(settled));localStorage.removeItem('flex-pre-import-snapshot-v1');window.flexRefresh?.();renderExtra();queueSync();alert('Đã hoàn tác thay đổi gần nhất.')}catch(err){alert('Không thể hoàn tác: '+err.message)}}
 function settleZeroDay(){const date=prompt('Ngày không có chuyến hoàn thành (YYYY-MM-DD):',$('day').value);if(!date)return;if(!safeDate(date)){alert('Ngày không hợp lệ.');return}if(!confirm('Chốt '+date+' với 0 giờ thực tế và hủy toàn bộ Reserve chưa chạy của ngày này?'))return;captureBaseline(date);localStorage.setItem('flex-pre-import-snapshot-v1',JSON.stringify({version:3,entries:get(),blocks:records,baseline,settled}));for(const b of records.filter(x=>x.date===date&&x.kind==='r'))b.kind='c';records=records.filter(b=>b.date!==date||b.kind!=='a');settled[date]=new Date().toISOString();rebuildDates([date]);saveLocal()}
 function renderExtra(){
  const reserves=records.filter(b=>b.kind==='r').sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
@@ -464,10 +512,17 @@ function renderExtra(){
      const m=minutes(b.start,b.end);total+=m;
      const row=document.createElement('div');row.className='flex-item';
      const t=document.createElement('span');t.textContent=displayTime(b.start)+' – '+displayTime(b.end)+' · '+dur(m)+' Reserve';
-     const btn=document.createElement('button');btn.className='danger';btn.textContent='🗑 Xóa';btn.setAttribute('aria-label','Xóa reserve '+displayDate(date)+' '+b.start);btn.onclick=()=>removeBlock(b.id);
-     row.append(t,btn);card.append(row);
+     const actions=document.createElement('div');actions.className='controls flex-reserve-actions';
+     const done=document.createElement('button');done.className='secondary';done.textContent='✓ Hoàn thành';done.setAttribute('aria-label','Hoàn thành Reserve '+displayDate(date)+' '+b.start);done.onclick=()=>changeReserveStatus([b.id],'a');
+     const cancel=document.createElement('button');cancel.className='danger';cancel.textContent='✕ Đã hủy';cancel.setAttribute('aria-label','Hủy Reserve '+displayDate(date)+' '+b.start);cancel.onclick=()=>changeReserveStatus([b.id],'c');
+     const btn=document.createElement('button');btn.className='secondary';btn.textContent='🗑 Xóa';btn.setAttribute('aria-label','Xóa reserve '+displayDate(date)+' '+b.start);btn.onclick=()=>removeBlock(b.id);
+     actions.append(done,cancel,btn);row.append(t,actions);card.append(row);
    }
-   const totalRow=document.createElement('div');totalRow.className='flex-reserve-total';totalRow.innerHTML='<span>Tổng Reserve</span>';const val=document.createElement('span');val.textContent=dur(total);totalRow.append(val);card.append(totalRow);reserveList.append(card);
+   const totalRow=document.createElement('div');totalRow.className='flex-reserve-total';totalRow.innerHTML='<span>Tổng Reserve</span>';const val=document.createElement('span');val.textContent=dur(total);totalRow.append(val);card.append(totalRow);
+   const dayActions=document.createElement('div');dayActions.className='controls flex-reserve-day-actions';
+   const completeAll=document.createElement('button');completeAll.className='secondary';completeAll.textContent='✓ Hoàn thành cả ngày';completeAll.onclick=()=>changeReserveStatus(byDate[date].map(b=>b.id),'a');
+   const cancelAll=document.createElement('button');cancelAll.className='danger';cancelAll.textContent='✕ Hủy tất cả Reserve';cancelAll.onclick=()=>changeReserveStatus(byDate[date].map(b=>b.id),'c');
+   dayActions.append(completeAll,cancelAll);card.append(dayActions);reserveList.append(card);
  }
  if(!reserves.length)reserveList.textContent='Chưa có reserve được lưu theo từng block. Các giờ reserve nhập tay vẫn hiển thị trong bảng gốc.';
  const month=$('flex-month').value,select=$('flex-date-filter'),previous=select.value;
@@ -500,7 +555,7 @@ const histWd=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const y=Numbe
 function displayDate(d){return histWdFull(d)}
 function displayTime(t){const [h,m]=t.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+(h>=12?' PM':' AM')}
 function editBlock(id){const old=records.find(b=>b.id===id);if(!old)return;let date=prompt('Ngày YYYY-MM-DD',old.date);if(date===null)return;let start=prompt('Bắt đầu HH:MM (24h)',old.start);if(start===null)return;let end=prompt('Kết thúc HH:MM (24h)',old.end);if(end===null)return;let kind=prompt('Loại: a = Completed, r = Reserve, c = Đã hủy',old.kind);if(kind===null)return;const updated={...old,date,start,end,kind,updatedAt:new Date().toISOString()};if(!safeDate(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||!['a','r','c'].includes(kind)||!(minutes(start,end)>0)){alert('Ngày, giờ hoặc loại block không hợp lệ.');return}if(records.some(b=>b.id!==id&&stamp(b)===stamp(updated))){alert('Block này đã tồn tại.');return}captureBaseline(old.date);captureBaseline(date);baseline[old.date]={a:0,r:0};baseline[date]={a:0,r:0};records=records.map(b=>b.id===id?updated:b);rebuildDates([old.date,date]);saveLocal()}
-$('flex-zero').onclick=settleZeroDay;$('flex-undo').onclick=undoLastImport;
+$('flex-zero').onclick=settleZeroDay;$('flex-undo').onclick=undoLastImport;$('flex-reserve-undo').onclick=undoLastImport;
 $('flex-history-toggle').onclick=()=>{$('flex-history-panel').hidden=!$('flex-history-panel').hidden;renderExtra()};$('flex-month').value=iso(new Date()).slice(0,7);$('flex-month').onchange=()=>{$('flex-date-filter').value='';renderExtra()};$('flex-date-filter').onchange=renderExtra;
 $('flex-upload').onclick=()=>$('flex-images').click();$('flex-cancel-review').onclick=()=>{$('flex-review-panel').hidden=true;pendingEarnings=new Set()};
 const normalizeTime=(h,m,ampm)=>{h=Number(h);m=Number(m);if(h>23||m>59)return null;if(ampm){if(h<1||h>12)return null;h=h%12+(ampm.toUpperCase()==='PM'?12:0)}return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')};
