@@ -141,8 +141,130 @@ input,select,button{max-width:100%;min-width:0}
 }
 
 </style>
-</head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
-<section class="card"><div class="grid"><div><label for="day">Ngày cần kiểm tra</label><input id="day" type="date"><div class="auto-today-row"><label class="auto-today-text" for="auto-today">Auto Today <span id="auto-today-state">ON</span></label><label class="auto-today-switch"><input id="auto-today" type="checkbox" checked aria-label="Tự động chọn hôm nay"><span class="auto-today-track"></span></label></div></div><div><label for="cap">Giới hạn rolling (giờ)</label><input id="cap" type="number" min="1" max="168" step="0.5" value="40"></div></div><div class="grid" style="margin-top:12px"><div class="metric"><small>Đã chạy trong 7 ngày</small><strong id="used">–</strong></div><div class="metric"><small>Còn trước reserve hôm nay</small><strong class="green" id="free">–</strong></div><div class="metric"><small>Reserve hôm nay</small><strong id="reserved">–</strong></div><div class="metric"><small>Còn cho IO hôm nay</small><strong class="green" id="io">–</strong></div></div><div class="bar"><span id="bar"></span></div><div class="muted" id="window"></div><div class="hint" id="warning" style="margin-top:12px"></div></section>
+<style id="weekday-uniform-ui">
+
+/* Weekday labels are display-only; all stored dates remain ISO YYYY-MM-DD. */
+.weekday-check-date {position:relative;min-width:0;width:100%;height:64px;border:1px solid #c8d9e4;border-radius:9px;background:#fff;display:flex;align-items:center;overflow:hidden;padding:5px 24px 5px 6px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2317324a' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M7 3v4M17 3v4M3 10h18'/%3E%3C/svg%3E");background-size:15px 15px;background-position:right 5px center;background-repeat:no-repeat;}
+#flex-history-panel #flex-month, #flex-history-panel #flex-date-filter{font-size:16px!important;}
+#weekday-check-label{display:block;pointer-events:none;min-width:0;font-size:16px!important;line-height:1.22;white-space:pre-line;font-variant-numeric:tabular-nums;font-weight:400;}
+.weekday-check-date #day{position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:2;cursor:pointer;min-width:0;max-width:100%;padding:0;border:0;}
+#entries .row {min-height:64px;align-items:center;}
+#entries .row > .samsung-date-cell, #entries .row > .date-cell{height:64px!important;min-height:64px!important;max-height:none!important;min-width:0!important;align-items:center!important;justify-content:flex-start!important;}
+#entries .row > .samsung-date-cell .samsung-date-label, #entries .row > .date-cell .date-label{display:block!important;white-space:pre-line!important;font-size:16px!important;letter-spacing:0!important;line-height:1.23!important;text-align:left!important;font-weight:400!important;overflow:visible!important;max-width:100%!important;padding:0!important;font-variant-numeric:tabular-nums!important;}
+#entries .row > input:not([type=date]){height:64px!important;min-height:64px!important;font-size:16px!important;font-variant-numeric:tabular-nums!important;}
+#entries .row > button{height:64px!important;min-height:64px!important;align-self:center!important;}
+@media(max-width:600px){#entries .row{grid-template-rows:64px!important;min-height:64px!important}}
+@media(max-width:365px){
+ #entries .row > .samsung-date-cell{padding-right:15px!important;background-size:12px 12px!important;background-position:right 2px center!important;}
+ #entries .row > .date-cell .date-label{font-size:16px!important;}
+}
+.forecast td.weekday-forecast-date{white-space:normal!important;line-height:1.2!important;vertical-align:middle;}
+.weekday-forecast-date span{display:block;white-space:nowrap;font-size:inherit!important;line-height:1.2;letter-spacing:0;}
+/* OCR date review: retain a tappable native date input with a clear weekday label. */
+.flex-review .flex-date{position:relative;min-width:0;}
+.flex-review .flex-date .weekday-date-preview{display:flex;align-items:center;min-width:0;width:100%;min-height:44px;border:1px solid #c8d9e4;border-radius:9px;padding:8px 9px;background:#fff;font-size:16px!important;line-height:1.25;white-space:normal;overflow-wrap:normal;font-variant-numeric:tabular-nums;}
+.flex-review .flex-date input[type=date]{position:absolute;left:0;right:0;bottom:0;width:100%;height:44px;opacity:0;z-index:2;cursor:pointer;max-width:100%;}
+
+@media(max-width:600px){
+ #entries .row{grid-template-columns:minmax(0,1.58fr) minmax(0,.90fr) minmax(0,.90fr) 30px!important;gap:4px!important;}
+ #entries .row > .date-cell{padding:3px 4px!important;}
+ #entries .row > .date-cell .date-label{font-size:16px!important;}
+ #entries .row > input:not([type=date]){font-size:16px!important;padding:7px 2px!important;text-align:center!important;}
+}
+@media(max-width:365px){
+ #entries .row{grid-template-columns:minmax(0,1.62fr) minmax(0,.9fr) minmax(0,.9fr) 26px!important;gap:3px!important;}
+}
+
+/* Single-line weekday layout: equal font size for dates and times. */
+:root{--weekday-equal-font:clamp(14px,4vw,16px);}
+.weekday-check-date{
+  height:46px!important;min-height:46px!important;
+  padding:3px 21px 3px 5px!important;
+  background-size:13px 13px!important;
+  background-position:right 4px center!important;
+}
+#weekday-check-label{
+  white-space:nowrap!important;
+  font-size:var(--weekday-equal-font)!important;
+  line-height:1.2!important;
+  letter-spacing:-.35px!important;
+  overflow:visible!important;
+}
+main > section.card:first-of-type > .grid:first-child{
+  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)!important;
+}
+#entries .row{
+  grid-template-rows:46px!important;
+  min-height:46px!important;
+  align-items:center!important;
+}
+#entries .row > .samsung-date-cell,
+#entries .row > .date-cell{
+  height:46px!important;min-height:46px!important;
+  max-height:46px!important;
+  padding:0 3px!important;
+  display:flex!important;
+  justify-content:flex-start!important;
+  align-items:center!important;
+  overflow:hidden!important;
+}
+#entries .row > .samsung-date-cell{
+  background-image:none!important;
+}
+#entries .row > .samsung-date-cell .samsung-date-label,
+#entries .row > .date-cell .date-label{
+  font-size:var(--weekday-equal-font)!important;
+  white-space:nowrap!important;
+  letter-spacing:-.3px!important;
+  line-height:1.2!important;
+  max-width:100%!important;
+  overflow:visible!important;
+  text-align:left!important;
+  font-weight:400!important;
+}
+#entries .row > input:not([type=date]){
+  font-size:var(--weekday-equal-font)!important;
+  height:46px!important;min-height:46px!important;
+  padding:6px 2px!important;
+  line-height:1.2!important;
+}
+#entries .row > button{
+  height:46px!important;min-height:46px!important;
+}
+@media(max-width:600px){
+ #entries .row{
+   grid-template-columns:minmax(0,2.12fr) minmax(0,.68fr) minmax(0,.68fr) 26px!important;
+   grid-template-rows:46px!important;
+   gap:4px!important;
+ }
+ #entries .row > .samsung-date-cell,
+ #entries .row > .date-cell{padding:0 2px!important;}
+ #entries .row > button{width:26px!important;min-width:26px!important;max-width:26px!important;}
+}
+@media(max-width:350px){
+ #entries .row{gap:3px!important;grid-template-columns:minmax(0,2.18fr) minmax(0,.65fr) minmax(0,.65fr) 25px!important;}
+ #entries .row > button{width:25px!important;min-width:25px!important;max-width:25px!important;}
+}
+.forecast td.weekday-forecast-date{
+  white-space:nowrap!important;
+  line-height:1.2!important;
+  overflow:visible!important;
+}
+.forecast th:first-child,.forecast td:first-child{width:25%!important;}
+.forecast th:nth-child(2),.forecast td:nth-child(2){width:17%!important;}
+.forecast th:nth-child(3),.forecast td:nth-child(3){width:17%!important;}
+.forecast th:nth-child(4),.forecast td:nth-child(4){width:17%!important;}
+.forecast th:nth-child(5),.forecast td:nth-child(5){width:24%!important;}
+.flex-review .flex-date .weekday-date-preview{
+  white-space:nowrap!important;
+  font-size:var(--weekday-equal-font)!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis;
+}
+
+</style></head><body><header><div class="wrap"><div style="font-size:12px;letter-spacing:2px;opacity:.8">AMAZON FLEX · PLANNER</div><h1>Rolling 7 Days</h1><div class="sub">Tự tính giới hạn 40 giờ, giờ rơi khỏi rolling, reserve và thời gian còn cho IO.</div></div></header><main>
+<section class="card"><div class="grid"><div><label for="day">Ngày cần kiểm tra</label><div class="weekday-check-date"><span id="weekday-check-label" aria-hidden="true"></span><input id="day" type="date" aria-label="Ngày cần kiểm tra"></div><div class="auto-today-row"><label class="auto-today-text" for="auto-today">Auto Today <span id="auto-today-state">ON</span></label><label class="auto-today-switch"><input id="auto-today" type="checkbox" checked aria-label="Tự động chọn hôm nay"><span class="auto-today-track"></span></label></div></div><div><label for="cap">Giới hạn rolling (giờ)</label><input id="cap" type="number" min="1" max="168" step="0.5" value="40"></div></div><div class="grid" style="margin-top:12px"><div class="metric"><small>Đã chạy trong 7 ngày</small><strong id="used">–</strong></div><div class="metric"><small>Còn trước reserve hôm nay</small><strong class="green" id="free">–</strong></div><div class="metric"><small>Reserve hôm nay</small><strong id="reserved">–</strong></div><div class="metric"><small>Còn cho IO hôm nay</small><strong class="green" id="io">–</strong></div></div><div class="bar"><span id="bar"></span></div><div class="muted" id="window"></div><div class="hint" id="warning" style="margin-top:12px"></div></section>
 <section class="card"><h2>Ngày hôm sau được thêm bao nhiêu giờ?</h2><div class="grid"><div class="metric"><small>Giờ của ngày cũ rơi khỏi rolling</small><strong id="released">–</strong></div><div class="metric"><small>Ngày mai còn cho IO</small><strong class="green" id="tomorrow">–</strong></div></div><p class="note" id="explain"></p><div class="controls"><button id="next">Xem ngày mai →</button><button class="secondary" id="prev">← Ngày trước</button><button class="secondary" id="today">Hôm nay</button></div></section>
 <section class="card"><h2>Nhập giờ chạy & reserve</h2><details id="flex-manual"><summary style="cursor:pointer;font-weight:700;margin-bottom:10px">Nhập / chỉnh sửa thủ công (mở khi cần)</summary><p class="note">Nhập theo dạng <b>7:46</b> (7 giờ 46 phút). Giờ thực tế và reserve phải là hai phần <b>không trùng nhau</b>. Khi hoàn thành một reserve, chuyển số giờ đó sang cột thực tế và giảm reserve còn lại về 0.</p><div class="controls"><span class="flex-add-day-wrap"><button class="secondary" id="add" type="button">+ Thêm ngày</button><input id="flex-add-date-picker" type="date" aria-label="Chọn ngày để thêm" title="Chọn ngày để thêm"></span><button class="secondary" id="seed">Khôi phục dữ liệu mẫu</button><button class="danger" id="clear">Xóa tất cả</button></div><div class="smalltitle">Ngày · Giờ đã chạy · Giờ reserve chưa chạy</div><div id="flex-out-controls"><label><input id="flex-hide-out" type="checkbox" checked> Ẩn ngày đã OUT</label><span id="flex-out-count" aria-live="polite"></span></div><div id="entries"></div><p class="muted">Dữ liệu được lưu tự động trên trình duyệt thiết bị này. Không cần đăng nhập.</p></details></section>
 
@@ -157,7 +279,7 @@ input,select,button{max-width:100%;min-width:0}
 <section class="card"><h2>Dự báo 14 ngày tới</h2><p class="note">Dự báo giả sử bạn không chạy thêm IO mới ngoài các giờ đã nhập. Giờ reserve được giữ chỗ khi tính số giờ IO còn lại.</p><div style="overflow-x:auto"><table class="forecast"><thead><tr><th>Ngày</th><th>Thực tế 7N</th><th>Reserve 7N</th><th>IO còn*</th><th>Giờ rơi ra ngày sau</th></tr></thead><tbody id="forecast"></tbody></table></div><p class="muted">* IO còn = giới hạn − giờ thực tế 7 ngày − tất cả reserve chưa chạy trong cửa sổ 7 ngày (ước tính thận trọng). Chỉ tiêu riêng ngày có thể khác do giới hạn/ngày và cách Amazon xét block tương lai.</p></section>
 <section class="card"><h2>Sao lưu dữ liệu</h2><div class="controls"><button id="export">Tải bản sao JSON</button><button class="secondary" id="importBtn">Nhập bản sao</button><input type="file" id="importFile" accept="application/json" hidden></div></section>
 <footer>Ứng dụng hỗ trợ lập kế hoạch, không kết nối với Amazon Flex và không bảo đảm IO sẽ xuất hiện.</footer></main><script>
-(()=>{'use strict';const $=id=>document.getElementById(id),KEY='flex-rolling-v2',MS=86400000;const samples=[['2026-10-05',316,0],['2026-10-06',248,0],['2026-10-07',306,0],['2026-10-08',174,0],['2026-10-09',260,0],['2026-10-10',433,0],['2026-10-11',477,0],['2026-10-12',466,0],['2026-10-13',0,120],['2026-10-14',0,240],['2026-10-15',0,240],['2026-10-16',0,120]];const initial=()=>Object.fromEntries(samples.map(([d,a,r])=>[d,{a,r}]));let data;try{data=JSON.parse(localStorage.getItem(KEY))||initial()}catch{data=initial()};const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const parseDate=s=>new Date(s+'T12:00:00');const shift=(s,n)=>{let d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)};const fmt=m=>{let neg=m<0;m=Math.abs(Math.round(m));return (neg?'-':'')+Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')+'m'};const parse=s=>{s=String(s||'').trim().replace(',','.');if(!s)return 0;if(/^\d+:\d{1,2}$/.test(s)){let [h,m]=s.split(':').map(Number);return h*60+m}if(/^\d+(\.\d+)?$/.test(s))return Math.round(Number(s)*60);return NaN};const edit=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');const n=d=>data[d]||{a:0,r:0};const sum=(d,k)=>{let s=0;for(let i=0;i<7;i++)s+=n(shift(d,-i))[k]||0;return s};const persist=()=>{localStorage.setItem(KEY,JSON.stringify(data));render()};const outToday=()=>iso(new Date());const isOut=date=>date<shift(outToday(),-6);function renderEntries(){let keys=Object.keys(data).sort();const outCount=keys.filter(isOut).length;$('flex-out-count').textContent=outCount?outCount+' ngày OUT':'Không có ngày OUT';if($('flex-hide-out').checked)keys=keys.filter(date=>!isOut(date));$('entries').replaceChildren();keys.forEach(date=>{let item=data[date],row=document.createElement('div');row.className='row'+(isOut(date)?' flex-out-row':'');let di=document.createElement('input');di.type='date';di.value=date;di.setAttribute('aria-label','Ngày');di.onchange=()=>{if(!di.value)return;data[di.value]=item;if(di.value!==date)delete data[date];persist()};let dateCell=document.createElement('div');dateCell.className='date-cell';let dateLabel=document.createElement('span');dateLabel.className='date-label';dateLabel.textContent=date.slice(8,10)+'/'+date.slice(5,7)+'/'+date.slice(0,4);dateCell.append(dateLabel,di);row.append(dateCell);for(const key of ['a','r']){let input=document.createElement('input');input.value=edit(item[key]||0);input.setAttribute('aria-label',key==='a'?'Giờ thực tế':'Giờ reserve');input.onchange=()=>{let val=parse(input.value);if(!Number.isFinite(val)||val<0||val>1440){alert('Nhập giờ hợp lệ như 5:30 hoặc 5.5');input.value=edit(item[key]||0);return}item[key]=val;persist()};row.append(input)}let del=document.createElement('button');del.className='danger';del.textContent='×';del.setAttribute('aria-label','Xóa ngày '+date);del.onclick=()=>{delete data[date];persist()};row.append(del);$('entries').append(row)})}function render(){let day=$('day').value,cap=Math.round(Number($('cap').value)*60)||2400,used=sum(day,'a'),reserved=sum(day,'r'),todayReserve=n(day).r||0,free=cap-used,io=cap-used-reserved,old=shift(day,-6),tom=shift(day,1),drop=n(old).a+n(old).r; $('used').textContent=fmt(used);$('free').textContent=fmt(free);$('reserved').textContent=fmt(todayReserve);$('io').textContent=fmt(io);$('io').className=io<0?'red':'green';$('bar').style.width=Math.max(0,Math.min(100,used/cap*100))+'%';$('window').textContent='Cửa sổ: '+shift(day,-6)+' → '+day+' · Reserve chưa chạy trong 7 ngày: '+fmt(reserved);$('released').textContent=fmt(drop);let tomio=cap-sum(tom,'a')-sum(tom,'r');$('tomorrow').textContent=fmt(tomio);$('tomorrow').className=tomio<0?'red':'green';$('explain').textContent='Khi sang '+tom+', ngày '+old+' rời cửa sổ. Giờ thực tế rơi ra: '+fmt(n(old).a)+'. Reserve chưa chạy rơi ra: '+fmt(n(old).r)+'. Nếu không có chuyến mới, khoảng trống rolling tăng tương ứng.';$('warning').textContent=io<0?'⚠ Dữ liệu đã nhập vượt giới hạn 7 ngày '+fmt(cap)+'. Hãy kiểm tra lại giờ hoặc reserve.':io===0?'Bạn đã hết khoảng trống rolling sau khi tính các reserve trong 7 ngày.':'Bạn còn khoảng '+fmt(io)+' theo mô hình 7 ngày sau khi trừ reserve trong cửa sổ. Amazon có thể xét cả reserve ngoài cửa sổ hoặc các giới hạn khác.';let html='';for(let i=0;i<14;i++){let d=shift(day,i),a=sum(d,'a'),r=sum(d,'r'),space=cap-a-r,dropd=shift(d,-6);html+=`<tr><td>${d.slice(5)}</td><td>${fmt(a)}</td><td>${fmt(r)}</td><td style="color:${space<0?'#b7352e':'#087c64'};font-weight:700">${fmt(space)}</td><td>${fmt(n(dropd).a+n(dropd).r)}</td></tr>`}$('forecast').innerHTML=html;renderEntries()};let autoToday=true;let lastAutoDate=iso(new Date());const setAutoToday=enabled=>{autoToday=enabled;$('auto-today').checked=enabled;$('auto-today-state').textContent=enabled?'ON':'OFF';if(enabled){lastAutoDate=iso(new Date());$('day').value=lastAutoDate}render()};const manualDay=()=>{if(autoToday)setAutoToday(false);else render()};const refreshToday=()=>{const now=iso(new Date());if(autoToday&&now!==lastAutoDate){lastAutoDate=now;$('day').value=now;render()}else render()};$('day').value=lastAutoDate;$('auto-today').onchange=()=>setAutoToday($('auto-today').checked);$('flex-hide-out').onchange=renderEntries;document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshToday()});window.addEventListener('focus',refreshToday);$('cap').onchange=render;$('day').onchange=manualDay;$('next').onclick=()=>{$('day').value=shift($('day').value,1);manualDay()};$('prev').onclick=()=>{$('day').value=shift($('day').value,-1);manualDay()};$('today').onclick=()=>{setAutoToday(true)};const addDatePicker=$('flex-add-date-picker');
+(()=>{'use strict';const $=id=>document.getElementById(id),KEY='flex-rolling-v2',MS=86400000;const samples=[['2026-10-05',316,0],['2026-10-06',248,0],['2026-10-07',306,0],['2026-10-08',174,0],['2026-10-09',260,0],['2026-10-10',433,0],['2026-10-11',477,0],['2026-10-12',466,0],['2026-10-13',0,120],['2026-10-14',0,240],['2026-10-15',0,240],['2026-10-16',0,120]];const initial=()=>Object.fromEntries(samples.map(([d,a,r])=>[d,{a,r}]));let data;try{data=JSON.parse(localStorage.getItem(KEY))||initial()}catch{data=initial()};const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;const wd=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const y=Number(s.slice(0,4)),m=Number(s.slice(5,7)),d=Number(s.slice(8,10));const date=new Date(y,m-1,d);if(date.getFullYear()!==y||date.getMonth()!==m-1||date.getDate()!==d)return null;return ['CN','T2','T3','T4','T5','T6','T7'][date.getDay()]};const wdShort=s=>(wd(s)||'')+' - '+s.slice(8,10)+'/'+s.slice(5,7);const wdFull=s=>wd(s)?wdShort(s)+'/'+s.slice(0,4):'';const wdStacked=s=>wdFull(s);const parseDate=s=>new Date(s+'T12:00:00');const shift=(s,n)=>{let d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)};const fmt=m=>{let neg=m<0;m=Math.abs(Math.round(m));return (neg?'-':'')+Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')+'m'};const parse=s=>{s=String(s||'').trim().replace(',','.');if(!s)return 0;if(/^\d+:\d{1,2}$/.test(s)){let [h,m]=s.split(':').map(Number);return h*60+m}if(/^\d+(\.\d+)?$/.test(s))return Math.round(Number(s)*60);return NaN};const edit=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');const n=d=>data[d]||{a:0,r:0};const sum=(d,k)=>{let s=0;for(let i=0;i<7;i++)s+=n(shift(d,-i))[k]||0;return s};const persist=()=>{localStorage.setItem(KEY,JSON.stringify(data));render()};const outToday=()=>iso(new Date());const isOut=date=>date<shift(outToday(),-6);function renderEntries(){let keys=Object.keys(data).sort();const outCount=keys.filter(isOut).length;$('flex-out-count').textContent=outCount?outCount+' ngày OUT':'Không có ngày OUT';if($('flex-hide-out').checked)keys=keys.filter(date=>!isOut(date));$('entries').replaceChildren();keys.forEach(date=>{let item=data[date],row=document.createElement('div');row.className='row'+(isOut(date)?' flex-out-row':'');let di=document.createElement('input');di.type='date';di.value=date;di.setAttribute('aria-label','Ngày');di.onchange=()=>{if(!di.value)return;data[di.value]=item;if(di.value!==date)delete data[date];persist()};let dateCell=document.createElement('div');dateCell.className='date-cell';let dateLabel=document.createElement('span');dateLabel.className='date-label';dateLabel.textContent=wdStacked(date);dateCell.append(dateLabel,di);row.append(dateCell);for(const key of ['a','r']){let input=document.createElement('input');input.value=edit(item[key]||0);input.setAttribute('aria-label',key==='a'?'Giờ thực tế':'Giờ reserve');input.onchange=()=>{let val=parse(input.value);if(!Number.isFinite(val)||val<0||val>1440){alert('Nhập giờ hợp lệ như 5:30 hoặc 5.5');input.value=edit(item[key]||0);return}item[key]=val;persist()};row.append(input)}let del=document.createElement('button');del.className='danger';del.textContent='×';del.setAttribute('aria-label','Xóa ngày '+date);del.onclick=()=>{delete data[date];persist()};row.append(del);$('entries').append(row)})}function render(){let day=$('day').value;$('weekday-check-label').textContent=wdStacked(day);let cap=Math.round(Number($('cap').value)*60)||2400,used=sum(day,'a'),reserved=sum(day,'r'),todayReserve=n(day).r||0,free=cap-used,io=cap-used-reserved,old=shift(day,-6),tom=shift(day,1),drop=n(old).a+n(old).r; $('used').textContent=fmt(used);$('free').textContent=fmt(free);$('reserved').textContent=fmt(todayReserve);$('io').textContent=fmt(io);$('io').className=io<0?'red':'green';$('bar').style.width=Math.max(0,Math.min(100,used/cap*100))+'%';$('window').textContent='Cửa sổ: '+shift(day,-6)+' → '+day+' · Reserve chưa chạy trong 7 ngày: '+fmt(reserved);$('released').textContent=fmt(drop);let tomio=cap-sum(tom,'a')-sum(tom,'r');$('tomorrow').textContent=fmt(tomio);$('tomorrow').className=tomio<0?'red':'green';$('explain').textContent='Khi sang '+tom+', ngày '+old+' rời cửa sổ. Giờ thực tế rơi ra: '+fmt(n(old).a)+'. Reserve chưa chạy rơi ra: '+fmt(n(old).r)+'. Nếu không có chuyến mới, khoảng trống rolling tăng tương ứng.';$('warning').textContent=io<0?'⚠ Dữ liệu đã nhập vượt giới hạn 7 ngày '+fmt(cap)+'. Hãy kiểm tra lại giờ hoặc reserve.':io===0?'Bạn đã hết khoảng trống rolling sau khi tính các reserve trong 7 ngày.':'Bạn còn khoảng '+fmt(io)+' theo mô hình 7 ngày sau khi trừ reserve trong cửa sổ. Amazon có thể xét cả reserve ngoài cửa sổ hoặc các giới hạn khác.';let html='';for(let i=0;i<14;i++){let d=shift(day,i),a=sum(d,'a'),r=sum(d,'r'),space=cap-a-r,dropd=shift(d,-6);html+=`<tr><td class="weekday-forecast-date">${wdShort(d)}</td><td>${fmt(a)}</td><td>${fmt(r)}</td><td style="color:${space<0?'#b7352e':'#087c64'};font-weight:700">${fmt(space)}</td><td>${fmt(n(dropd).a+n(dropd).r)}</td></tr>`}$('forecast').innerHTML=html;renderEntries()};let autoToday=true;let lastAutoDate=iso(new Date());const setAutoToday=enabled=>{autoToday=enabled;$('auto-today').checked=enabled;$('auto-today-state').textContent=enabled?'ON':'OFF';if(enabled){lastAutoDate=iso(new Date());$('day').value=lastAutoDate}render()};const manualDay=()=>{if(autoToday)setAutoToday(false);else render()};const refreshToday=()=>{const now=iso(new Date());if(autoToday&&now!==lastAutoDate){lastAutoDate=now;$('day').value=now;render()}else render()};$('day').value=lastAutoDate;$('auto-today').onchange=()=>setAutoToday($('auto-today').checked);$('flex-hide-out').onchange=renderEntries;document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshToday()});window.addEventListener('focus',refreshToday);$('cap').onchange=render;$('day').onchange=manualDay;$('next').onclick=()=>{$('day').value=shift($('day').value,1);manualDay()};$('prev').onclick=()=>{$('day').value=shift($('day').value,-1);manualDay()};$('today').onclick=()=>{setAutoToday(true)};const addDatePicker=$('flex-add-date-picker');
 $('add').onclick=()=>{ // Keyboard fallback: touch users tap the native date input overlay.
  try{if(typeof addDatePicker.showPicker==='function'){addDatePicker.showPicker();return}}catch(_){}
  addDatePicker.focus();addDatePicker.click();
@@ -272,7 +394,8 @@ function renderExtra(){
  }
  if(!Object.keys(group).length)list.textContent='Chưa có block trong khoảng thời gian này.';
 }
-function displayDate(d){return d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4)}
+const histWd=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const y=Number(s.slice(0,4)),m=Number(s.slice(5,7)),d=Number(s.slice(8,10));const date=new Date(y,m-1,d);if(date.getFullYear()!==y||date.getMonth()!==m-1||date.getDate()!==d)return null;return ['CN','T2','T3','T4','T5','T6','T7'][date.getDay()]};const histWdShort=s=>(histWd(s)||'')+' - '+s.slice(8,10)+'/'+s.slice(5,7);const histWdFull=s=>histWd(s)?histWdShort(s)+'/'+s.slice(0,4):'';const histWdStacked=s=>histWdFull(s);
+function displayDate(d){return histWdFull(d)}
 function displayTime(t){const [h,m]=t.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+(h>=12?' PM':' AM')}
 function editBlock(id){const old=records.find(b=>b.id===id);if(!old)return;let date=prompt('Ngày YYYY-MM-DD',old.date);if(date===null)return;let start=prompt('Bắt đầu HH:MM (24h)',old.start);if(start===null)return;let end=prompt('Kết thúc HH:MM (24h)',old.end);if(end===null)return;let kind=prompt('Loại: a = Completed, r = Reserve, c = Đã hủy',old.kind);if(kind===null)return;const updated={...old,date,start,end,kind,updatedAt:new Date().toISOString()};if(!safeDate(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||!['a','r','c'].includes(kind)||!(minutes(start,end)>0)){alert('Ngày, giờ hoặc loại block không hợp lệ.');return}if(records.some(b=>b.id!==id&&stamp(b)===stamp(updated))){alert('Block này đã tồn tại.');return}captureBaseline(old.date);captureBaseline(date);baseline[old.date]={a:0,r:0};baseline[date]={a:0,r:0};records=records.map(b=>b.id===id?updated:b);rebuildDates([old.date,date]);saveLocal()}
 $('flex-zero').onclick=settleZeroDay;$('flex-undo').onclick=undoLastImport;
@@ -317,7 +440,7 @@ function parseImageText(text){
  // If OCR drops all date headers, leave blank and require manual date review.
  return {rows:[...new Map(rows.map(b=>[b.kind+'|'+b.date+'|'+b.start+'|'+b.end,b])).values()],source:isSchedule?'schedule':isEarnings?'earnings':'unknown'};
 }
-function reviewRow(b){let row=document.createElement('div');row.className='flex-review';const field=(label,type,value,cl)=>{let wrap=document.createElement('div');wrap.className=cl||'';let lab=document.createElement('label');lab.textContent=label;let el=document.createElement('input');el.type=type;el.value=value||'';wrap.append(lab,el);row.append(wrap);return el};let date=field('Ngày','date',b.date,'flex-date'),start=field('Bắt đầu','time',b.start),end=field('Kết thúc','time',b.end);let wrap=document.createElement('div');let lab=document.createElement('label');lab.textContent='Loại';let kind=document.createElement('select');kind.innerHTML='<option value="a">Completed</option><option value="r">Reserve</option>';kind.value=b.kind;wrap.append(lab,kind);row.append(wrap);let remove=document.createElement('button');remove.className='danger flex-remove';remove.textContent='Bỏ';remove.onclick=()=>row.remove();row.append(remove);row.extract=()=>({date:date.value,start:start.value,end:end.value,kind:kind.value,source:b.source||'manual'});$('flex-review-list').append(row)}
+function reviewRow(b){let row=document.createElement('div');row.className='flex-review';const field=(label,type,value,cl)=>{let wrap=document.createElement('div');wrap.className=cl||'';let lab=document.createElement('label');lab.textContent=label;let el=document.createElement('input');el.type=type;el.value=value||'';wrap.append(lab,el);row.append(wrap);return el};let date=field('Ngày','date',b.date,'flex-date'),start=field('Bắt đầu','time',b.start),end=field('Kết thúc','time',b.end);const dateWrap=date.parentElement,preview=document.createElement('span');preview.className='weekday-date-preview';preview.setAttribute('aria-hidden','true');const updateReviewDate=()=>{preview.textContent=histWdFull(date.value)||'Chạm để chọn ngày'};dateWrap.insertBefore(preview,date);date.addEventListener('change',updateReviewDate);updateReviewDate();let wrap=document.createElement('div');let lab=document.createElement('label');lab.textContent='Loại';let kind=document.createElement('select');kind.innerHTML='<option value="a">Completed</option><option value="r">Reserve</option>';kind.value=b.kind;wrap.append(lab,kind);row.append(wrap);let remove=document.createElement('button');remove.className='danger flex-remove';remove.textContent='Bỏ';remove.onclick=()=>row.remove();row.append(remove);row.extract=()=>({date:date.value,start:start.value,end:end.value,kind:kind.value,source:b.source||'manual'});$('flex-review-list').append(row)}
 $('flex-images').onchange=async e=>{
  const files=[...e.target.files];if(!files.length)return;pendingEarnings=new Set();$('flex-review-panel').hidden=false;$('flex-review-list').replaceChildren();$('flex-ocr-status').textContent='Đang đọc '+files.length+' ảnh…';
  try{if(!window.Tesseract){await new Promise((resolve,reject)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.append(s)})}
