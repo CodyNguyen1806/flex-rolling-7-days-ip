@@ -13,3 +13,13 @@ THU NHAP: thang moi tu ngay 1. Du lieu thang cu duoc giu ngay 1-7. Tu ngay 8 chi
 HEALTHCARE: quy moi tu ngay 1; quy cu giu ngay 1–7, tu ngay 8 tu dong xoa du lieu Healthcare quy cu. Dung gio Completed tu Rolling de uoc tinh, khong ghi de Rolling.
 BASE/TIPS: neu anh Earnings chi co tong Paid, se hien Base/Tips chua phan tach; khong tu doan.
 DANG LUY Y: Xoa du lieu app tren may se xoa localStorage; ZIP app KHONG kem du lieu gio/thu nhap tren dien thoai. Hay xuat JSON de sao luu.
+
+
+PHIEN BAN THU NHAP MO RONG - 16/10/2026
+- Delivery Earnings: Base + Tips, tinh theo ngay chay; nhan dien trung theo ngay + gio bat dau + gio ket thuc.
+- Cong vao thu nhap: Earnings Adjustment, Additional Tips, California PADSA Healthcare Subsidy da tra.
+- Khong cong/khong tru Instant Cash Out, Payment sent (chi la giao dich chuyen tien).
+- Khoan cong them nhan dien trung theo loai + ngay + so tien. Hai khoan thuc su giong het can xac nhan thu cong vi khong co ma giao dich.
+- Tips pending: khong chot thu nhap chuyen cho den khi Amazon cap nhat.
+- Khong sua du lieu gio Rolling 7 Days. Backup JSON truoc khi thay index.html.
+- Update GitHub hien dang chay: thay index.html, GIU NGUYEN sw.js/manifest/icon trong repository.

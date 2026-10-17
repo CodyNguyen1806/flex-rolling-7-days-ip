@@ -814,16 +814,16 @@ renderExtra();
 @media(max-width:370px){.fin-cols{gap:7px}.fin-tile{padding:9px}.fin-goal{padding:9px}.fin-goal strong{font-size:19px}}
 </style>
 <section class="card" id="flex-income-card"><details><summary>Thu nhập · Ngày / Tuần / Tháng / $ mỗi giờ</summary>
-<p class="note">Chỉ upload Earnings sau khi Base + Tips đã đầy đủ. Ảnh có <b>Tips pending</b> sẽ bị bỏ qua. Thu nhập ghi về <b>ngày chạy</b>, không phải ngày upload; chức năng này không sửa giờ Rolling.</p>
+<p class="note">Thu nhập gồm <b>Base + Tips, Earnings Adjustment, Additional Tips và Healthcare Subsidy đã trả</b>. Không cộng Instant Cash Out hay Payment sent. Ảnh <b>Tips pending</b> không được chốt tiền chuyến. Không thay đổi giờ Rolling.</p>
 <div class="fin-cols">
 <div class="fin-tile"><small>Tiền ngày đang xem</small><strong id="fin-income-day">—</strong><div class="fin-mini" id="fin-income-day-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tuần (T2–CN)</small><strong id="fin-income-week">—</strong><div class="fin-mini" id="fin-income-week-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tháng hiện tại</small><strong id="fin-income-month">—</strong></div>
-<div class="fin-tile"><small>Base / Tips (tháng)</small><strong id="fin-income-split">—</strong></div>
-<div class="fin-tile"><small>Trung bình / giờ (ngày đã chốt tiền)</small><strong id="fin-income-rate">—</strong></div>
+<div class="fin-tile"><small>Base / Tips (tháng)</small><strong id="fin-income-split">—</strong></div><div class="fin-tile"><small>Adjustment / Tips thêm / Healthcare (tháng)</small><strong id="fin-income-specials">—</strong></div>
+<div class="fin-tile"><small>Trung bình / giờ (gồm các khoản cộng thêm)</small><strong id="fin-income-rate">—</strong></div>
 <div class="fin-tile"><small>Ngày đã chạy chưa chốt tiền (trong tuần)</small><strong id="fin-income-unfinished">—</strong></div>
 </div>
-<div class="fin-actions"><button id="fin-income-upload" type="button">📷 Upload Earnings đủ tips</button><button id="fin-income-add" class="secondary" type="button">＋ Nhập tiền thủ công</button></div>
+<div class="fin-actions"><button id="fin-income-upload" type="button">📷 Upload Earnings đủ tips</button><button id="fin-income-add" class="secondary" type="button">＋ Nhập chuyến</button><button id="fin-income-add-special" class="secondary" type="button">＋ Nhập khoản cộng thêm</button></div>
 <div id="fin-income-source" hidden class="flex-panel" style="margin:10px 0">
 <b>Chọn nơi lấy ảnh Earnings</b>
 <div class="fin-actions"><button type="button" class="secondary" id="fin-income-source-photos">🖼️ Ảnh / Google Photos</button><button type="button" id="fin-income-source-files">📁 My Files / Screenshots</button></div>
@@ -832,16 +832,16 @@ renderExtra();
 <div class="fin-status" id="fin-income-status">Chưa chọn ảnh. Có thể upload nhiều ảnh của các ngày đã qua trong cùng một lần.</div>
 <div id="fin-income-review" hidden>
 <h3 style="margin:12px 0">Kiểm tra tiền trước khi lưu</h3>
-<div class="fin-status">Kiểm tra ngày, giờ và số tiền từng chuyến. Bỏ ảnh thiếu thông tin hoặc đang Tips pending. Nếu OCR bỏ sót chuyến, thêm thủ công.</div>
+<div class="fin-status">Kiểm tra từng chuyến và các khoản cộng thêm. Chuyến giống ngày + giờ sẽ được cập nhật một lần mà không xóa chuyến khác; khoản cộng thêm giống loại + ngày + tiền chỉ lưu một lần. Nếu OCR đọc sai, sửa trước khi lưu. Tips pending sẽ không được chốt.</div>
 <div id="fin-income-review-list"></div>
-<div class="fin-actions"><button type="button" id="fin-income-more" class="secondary">＋ Thêm ảnh</button><button type="button" id="fin-income-more-manual" class="secondary">＋ Thêm chuyến</button></div>
+<div class="fin-actions"><button type="button" id="fin-income-more" class="secondary">＋ Thêm ảnh</button><button type="button" id="fin-income-more-manual" class="secondary">＋ Thêm chuyến</button><button type="button" id="fin-income-more-special" class="secondary">＋ Thêm khoản khác</button></div>
 <div id="fin-income-review-summary" class="fin-review-count"></div>
-<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55"><input type="checkbox" id="fin-income-confirm" style="width:20px;height:20px;flex:none;margin-top:2px"> Tôi xác nhận Base + Tips đã hoàn tất và các chuyến của từng ngày liệt kê đã đầy đủ.</label>
-<div class="fin-actions"><button id="fin-income-save" type="button">Lưu thu nhập cuối cùng</button><button id="fin-income-cancel" type="button" class="secondary">Đóng</button></div>
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55"><input type="checkbox" id="fin-income-confirm" style="width:20px;height:20px;flex:none;margin-top:2px"> Tôi đã kiểm tra: các chuyến đã có đủ Base + Tips và đủ số chuyến trong những ngày cần chốt. Khoản cộng thêm không tự chốt ngày chạy.</label>
+<div class="fin-actions"><button id="fin-income-save" type="button">Lưu thu nhập đã kiểm tra</button><button id="fin-income-cancel" type="button" class="secondary">Đóng</button></div>
 </div>
 <div class="flex-panel" id="fin-income-retention"><div class="fin-line"><b id="fin-income-current-month">Tháng hiện tại</b><span id="fin-income-retention-label">—</span></div><div class="fin-status" id="fin-income-retention-status">Giữ tháng trước thêm 7 ngày; sau đó chỉ dọn khi đủ Tips.</div></div>
 <details class="flex-panel" id="fin-income-prior-wrap" hidden><summary id="fin-income-prior-title">Tháng trước · Tạm giữ</summary><div class="fin-status" id="fin-income-prior-status"></div><div id="fin-income-prior"></div></details>
-<details class="flex-panel"><summary>Chi tiết tiền đã lưu</summary><div id="fin-income-history"></div></details>
+<p class="fin-status">Đối với khoản không có giờ chạy, ứng dụng chống trùng bằng loại + ngày + số tiền; nếu Amazon có hai khoản giống hệt nhau, hãy kiểm tra lại vì không có mã giao dịch để phân biệt tuyệt đối.</p><details class="flex-panel"><summary>Chi tiết tiền đã lưu</summary><div id="fin-income-history"></div></details>
 </details></section>
 <section class="card" id="flex-health-card"><details><summary>Healthcare Subsidy · Buffer / EST</summary><p class="note" id="fin-h-quarter-label">Chỉ theo dõi quý hiện tại; quý trước giữ thêm 7 ngày.</p><div id="fin-h-old-quarter" class="fin-status" hidden></div>
 <div class="fin-cols">
@@ -872,20 +872,24 @@ const fmtMoney=c=>'$'+(Math.round(c)/100).toLocaleString('en-US',{minimumFractio
 const prettyDate=s=>s?`${s.slice(8)}/${s.slice(5,7)}/${s.slice(0,4)}`:'—';
 const rolling=()=>read(ROLLINGKEY,{});
 const validMoney=r=>r&&parseDate(r.date)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.start||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.end||'')&&r.end>r.start&&Number.isSafeInteger(r.cents)&&r.cents>=0&&r.cents<=100000000;
-const incomeLoad=()=>{const o=read(MONEYKEY,{version:1,records:[],finalDays:[]});return o&&Array.isArray(o.records)&&Array.isArray(o.finalDays)?o:{version:1,records:[],finalDays:[]}};
+const incomeLoad=()=>{const o=read(MONEYKEY,{version:2,records:[],finalDays:[],specials:[]});return o&&Array.isArray(o.records)&&Array.isArray(o.finalDays)?{...o,specials:Array.isArray(o.specials)?o.specials:[]}: {version:2,records:[],finalDays:[],specials:[]}};
+const specialLabels={adjustment:'Earnings Adjustment',extra_tips:'Additional Tips',health_subsidy:'Healthcare Subsidy'};
+const specialKey=r=>r.date+'|'+r.specialType+'|'+r.cents;
+const validSpecial=r=>!!(r&&parseDate(r.date)&&Object.hasOwn(specialLabels,r.specialType)&&Number.isSafeInteger(r.cents)&&r.cents>0&&r.cents<=100000000);
+const allIncomeRecords=data=>[...data.records,...data.specials];
 const ym=d=>d.slice(0,7);
 const monthLabel=k=>k&&/^\d{4}-\d{2}$/.test(k)?k.slice(5)+'/'+k.slice(0,4):'—';
 const monthAfter=k=>{const d=parseDate(k+'-01');if(!d)return null;d.setMonth(d.getMonth()+1);return localISO(d).slice(0,7)};
 const monthPurgeDate=k=>{const next=monthAfter(k);return next?next+'-08':null};
-const incomeMonths=data=>[...new Set([...data.records.map(r=>ym(r.date)),...data.finalDays.map(ym)])].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
+const incomeMonths=data=>[...new Set([...allIncomeRecords(data).map(r=>ym(r.date)),...data.finalDays.map(ym)])].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
 const incompleteMonth=(k,data,entries)=>Object.entries(entries).filter(([date,v])=>ym(date)===k&&Number(v?.a)>0&&!data.finalDays.includes(date)).map(([date])=>date).sort();
 function pruneIncome(){const data=incomeLoad(),current=ym(today()),entries=rolling();const months=incomeMonths(data);let expired=[];
  for(const m of months){if(m>=current||today()<(monthPurgeDate(m)||'9999-12-31'))continue;
   // Amazon does not expose a final-Tips flag: completed workdays not confirmed via Earnings block deletion.
   if(incompleteMonth(m,data,entries).length===0)expired.push(m);
  }
- if(expired.length){const old=data.records.length+data.finalDays.length;data.records=data.records.filter(r=>!expired.includes(ym(r.date)));data.finalDays=data.finalDays.filter(d=>!expired.includes(ym(d)));
-  if(old!==data.records.length+data.finalDays.length)localStorage.setItem(MONEYKEY,JSON.stringify(data));
+ if(expired.length){const old=data.records.length+data.finalDays.length+data.specials.length;data.records=data.records.filter(r=>!expired.includes(ym(r.date)));data.specials=data.specials.filter(r=>!expired.includes(ym(r.date)));data.finalDays=data.finalDays.filter(d=>!expired.includes(ym(d)));
+  if(old!==data.records.length+data.finalDays.length+data.specials.length)localStorage.setItem(MONEYKEY,JSON.stringify(data));
  }
  return data;}
 
@@ -909,25 +913,26 @@ function pruneExpired(){pruneIncome();pruneHealthcare();}
 const totalDays=(entries,from,to)=>Object.entries(entries).reduce((sum,[d,v])=>sum+(d>=from&&d<=to&&v&&Number.isSafeInteger(Number(v.a))&&Number(v.a)>0?Number(v.a):0),0);
 const monday=s=>{let d=parseDate(s)||new Date();d.setDate(d.getDate()-(d.getDay()+6)%7);return localISO(d)};
 const duration=(start,end)=>{const [h,m]=start.split(':').map(Number),[h2,m2]=end.split(':').map(Number);return h2*60+m2-h*60-m};
-const recordKey=r=>r.date+'|'+r.start+'|'+r.end;
+const recordKey=r=>r.kind==='special'?'special|'+specialKey(r):r.date+'|'+r.start+'|'+r.end;
 const validIncome=r=>validMoney(r)&&['baseCents','tipsCents'].every(k=>r[k]===null||r[k]===undefined||(Number.isSafeInteger(r[k])&&r[k]>=0&&r[k]<=100000000))&&(!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents)||r.baseCents+r.tipsCents===r.cents);
-let review=[],busy=false,appendImages=false,blockedPending=0,healthInputsDirty=false,vacInputsDirty=false;
+const validReview=r=>r.kind==='special'?validSpecial(r):validIncome(r);
+let review=[],busy=false,appendImages=false,blockedPending=0,dupReview=0,healthInputsDirty=false,vacInputsDirty=false;
 function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.value)?$('day').value:today(),weekStart=monday(selected),weekEnd=nextDay(weekStart,6),entries=rolling(),current=ym(today());
- const sum=arr=>arr.reduce((n,r)=>n+r.cents,0),day=data.records.filter(r=>r.date===selected),week=data.records.filter(r=>r.date>=weekStart&&r.date<=weekEnd),month=data.records.filter(r=>ym(r.date)===current);
+ const sum=arr=>arr.reduce((n,r)=>n+r.cents,0),all=allIncomeRecords(data),day=all.filter(r=>r.date===selected),week=all.filter(r=>r.date>=weekStart&&r.date<=weekEnd),month=all.filter(r=>ym(r.date)===current);
  const weekFin=data.finalDays.filter(d=>d>=weekStart&&d<=weekEnd),mins=weekFin.reduce((n,d)=>n+(Number(entries[d]?.a)||0),0);
  const missing=Object.keys(entries).filter(d=>d>=weekStart&&d<=weekEnd&&(Number(entries[d]?.a)||0)>0&&!data.finalDays.includes(d)).length;
- const split=arr=>{const b=arr.filter(r=>Number.isSafeInteger(r.baseCents)).reduce((a,r)=>a+r.baseCents,0),t=arr.filter(r=>Number.isSafeInteger(r.tipsCents)).reduce((a,r)=>a+r.tipsCents,0),partial=arr.some(r=>!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents));return !arr.length?'—':(fmtMoney(b)+' / '+fmtMoney(t))+(partial?' *':'')};
- $('fin-income-day').textContent=data.finalDays.includes(selected)?fmtMoney(sum(day)):'Chưa chốt';
+ const split=arr=>{const deliveries=arr.filter(r=>!r.specialType),b=deliveries.filter(r=>Number.isSafeInteger(r.baseCents)).reduce((a,r)=>a+r.baseCents,0),t=deliveries.filter(r=>Number.isSafeInteger(r.tipsCents)).reduce((a,r)=>a+r.tipsCents,0),partial=deliveries.some(r=>!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents));return !deliveries.length?'—':(fmtMoney(b)+' / '+fmtMoney(t))+(partial?' *':'')};
+ $('fin-income-day').textContent=(data.finalDays.includes(selected)||day.some(r=>r.specialType))?fmtMoney(sum(day)):'Chưa chốt';
  $('fin-income-week').textContent=week.length?fmtMoney(sum(week)):'—';
  $('fin-income-day-split').textContent='Base / Tips: '+split(day);
  $('fin-income-week-split').textContent='Base / Tips: '+split(week);
  $('fin-income-month').textContent=month.length?fmtMoney(sum(month)):'—';
- $('fin-income-split').textContent=split(month);
+ $('fin-income-split').textContent=split(month);$('fin-income-specials').textContent=fmtMoney(sum(month.filter(r=>r.specialType)));
  $('fin-income-rate').textContent=mins>0?fmtMoney(Math.round(sum(week)*60/mins))+'/h':'—';
  $('fin-income-unfinished').textContent=missing+' ngày';
  $('fin-income-current-month').textContent='Tháng '+monthLabel(current);
  const prior=(()=>{const d=parseDate(today());d.setMonth(d.getMonth()-1);return localISO(d).slice(0,7)})();
- const priorRecords=data.records.filter(r=>ym(r.date)===prior),priorDone=data.finalDays.filter(d=>ym(d)===prior);
+ const priorRecords=all.filter(r=>ym(r.date)===prior),priorDone=data.finalDays.filter(d=>ym(d)===prior);
  const priorMissing=incompleteMonth(prior,data,entries),priorHas=priorRecords.length>0||priorDone.length>0;
  const grace=today()<prior+'-08'?false:today()<(monthPurgeDate(prior)||'9999-12-31');
  $('fin-income-retention-label').textContent='Tự chuyển ngày 01';
@@ -938,17 +943,27 @@ function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.val
   $('fin-income-prior').textContent='Tổng tiền đã lưu: '+fmtMoney(sum(priorRecords))+' · Base / Tips: '+split(priorRecords);
  }
  const div=$('fin-income-history');div.replaceChildren();const groups={};
- for(const r of data.records){(groups[r.date]??=[]).push(r)}
+ for(const r of all){(groups[r.date]??=[]).push(r)}
  for(const day of data.finalDays){if(!groups[day])groups[day]=[]}
  const dates=Object.keys(groups).sort().reverse();for(const date of dates){const rows=groups[date];const box=document.createElement('div');box.className='fin-history-day';const sumDay=sum(rows);
   const heading=document.createElement('div');heading.className='fin-line';const title=document.createElement('b');title.textContent=prettyDate(date);const amount=document.createElement('b');amount.textContent=fmtMoney(sumDay);heading.append(title,amount);box.append(heading);
-  const caption=document.createElement('div');caption.className='fin-mini';caption.textContent=rows.length+' chuyến · Base / Tips: '+split(rows);box.append(caption);div.append(box);
+  const caption=document.createElement('div');caption.className='fin-mini';caption.textContent=rows.filter(r=>!r.specialType).length+' chuyến · '+rows.filter(r=>r.specialType).map(r=>(specialLabels[r.specialType]||'Khác')+': '+fmtMoney(r.cents)).join(' · ')+' · Base / Tips: '+split(rows);box.append(caption);div.append(box);
  }
  if(!dates.length)div.textContent='Chưa có thu nhập nào.';
 }
 function setupReviewRow(item){const r={...item};review.push(r);updateReview()}
 function updateReview(){const root=$('fin-income-review-list');root.replaceChildren();let idx=0;
  for(const r of review){const id=idx++;const outer=document.createElement('div');outer.className='fin-review-row';
+  if(r.kind==='special'){
+   const marker=document.createElement('b');marker.textContent='Khoản cộng thêm · Không có giờ chạy';outer.append(marker);
+   const grid=document.createElement('div');grid.className='fin-inputs';
+   const fields=[['Ngày','date','date'],['Loại khoản','select','specialType'],['Số tiền ($)','number','amount']];
+   for(const [label,type,key] of fields){const wrap=document.createElement('div'),l=document.createElement('label');l.textContent=label;let input;
+    if(type==='select'){input=document.createElement('select');for(const [value,name] of Object.entries(specialLabels)){const o=document.createElement('option');o.value=value;o.textContent=name;input.append(o)}input.value=r.specialType||'adjustment';}
+    else{input=document.createElement('input');input.type=type;if(type==='number'){input.step='0.01';input.min='0.01'}input.value=key==='amount'?(r.cents===null?'':(r.cents/100).toFixed(2)):r[key]||''}
+    input.addEventListener('input',()=>{if(key==='amount'){const n=Number(input.value);r.cents=input.value.trim()!==''&&Number.isFinite(n)&&n>0&&n<=1000000?Math.round(n*100):null}else r[key]=input.value;updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
+   const controls=document.createElement('div');controls.className='fin-actions';const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Bỏ khoản';del.onclick=()=>{review=review.filter(x=>x!==r);updateReview()};controls.append(del);outer.append(grid,controls);root.append(outer);continue;
+  }
   const fields=[['Ngày','date','date'],['Bắt đầu','time','start'],['Kết thúc','time','end'],['Tiền tổng ($)','number','amount'],['Base ($) · nếu biết','number','base'],['Tips ($) · nếu biết','number','tips']];const grid=document.createElement('div');grid.className='fin-inputs';
   for(const [label,type,key] of fields){const wrap=document.createElement('div'),l=document.createElement('label'),input=document.createElement('input');l.textContent=label;input.type=type;input.step=type==='number'?'0.01':'any';input.min=type==='number'?'0':undefined;input.value=key==='amount'?(r.cents===null?'':(r.cents/100).toFixed(2)):(key==='base'||key==='tips')?(Number.isSafeInteger(r[key+'Cents'])?(r[key+'Cents']/100).toFixed(2):''):r[key]||'';
    input.addEventListener('input',()=>{if(key==='amount'||key==='base'||key==='tips'){const n=Number(input.value),c=input.value.trim()!==''&&Number.isFinite(n)&&n>=0&&n<=1000000?Math.round(n*100):null;if(key==='amount')r.cents=c;else r[key+'Cents']=c}else r[key]=input.value;updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
@@ -957,8 +972,8 @@ function updateReview(){const root=$('fin-income-review-list');root.replaceChild
  }
  updateReviewSummary();$('fin-income-review').hidden=false;
 }
-function updateReviewSummary(){const good=review.filter(validIncome),dates=[...new Set(good.map(r=>r.date))];const cash=good.reduce((s,r)=>s+r.cents,0),invalid=review.length-good.length;
- $('fin-income-review-summary').textContent=`${good.length} chuyến hợp lệ · ${dates.length} ngày · ${fmtMoney(cash)}${invalid?' · '+invalid+' chuyến cần sửa':''}${blockedPending?' · '+blockedPending+' chuyến Tips pending bị bỏ qua':''}`;
+function updateReviewSummary(){const good=review.filter(validReview),dates=[...new Set(good.map(r=>r.date))];const cash=good.reduce((s,r)=>s+r.cents,0),invalid=review.length-good.length;
+ $('fin-income-review-summary').textContent=`${good.filter(r=>r.kind!=='special').length} chuyến + ${good.filter(r=>r.kind==='special').length} khoản khác · ${dates.length} ngày · ${fmtMoney(cash)}${invalid?' · '+invalid+' mục cần sửa':''}${dupReview?' · '+dupReview+' khoản trùng ảnh đã gộp':''}${blockedPending?' · '+blockedPending+' chuyến Tips pending đã bỏ qua':''}`;
  $('fin-income-confirm').checked=false;
 }
 const dateEnglish=line=>{
@@ -976,28 +991,39 @@ const parseTime=(h,m,ap)=>{let hh=Number(h),mm=Number(m);if(hh<1||hh>12||mm>59)r
 const timeRange=/\b(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*(AM|PM)\b/i;
 const moneyRegex=/\$\s*([\d,]+(?:\.\d{1,2})?)/g;
 const amountCents=s=>{const n=Number(String(s).replace(/,/g,''));return Number.isFinite(n)?Math.round(n*100):null};
-function parseIncomeOCR(text){let lines=String(text).replace(/[–—−]/g,'-').split(/\n/).map(s=>s.trim()).filter(Boolean),segments=[],group=null;
- for(const line of lines){const info=dateEnglish(line),date=inferEnglishDate(info);if(date){if(group)segments.push(group);group={date,lines:[line]}}else if(group)group.lines.push(line)}if(group)segments.push(group);
+function parseIncomeOCR(text){let lines=String(text).replace(/[–—−]/g,'-').split(/\n/).map(s=>s.trim()).filter(Boolean),segments=[],group=null,prelude=[];
+ const labelLine=/^(?:instant cash out|payment sent|payment issued|california padsa|additional tips added|earnings adjustment)\b/i;
+ for(const line of lines){const info=dateEnglish(line),date=inferEnglishDate(info);
+  if(date){if(group)segments.push(group);group={date,lines:[...prelude,line]};prelude=[];}
+  else if(labelLine.test(line)&&group){if(group.lines.length===1)group.lines.push(line);else prelude.push(line)}
+  else if(group)group.lines.push(line);else if(labelLine.test(line))prelude.push(line);
+ }if(group)segments.push(group);
  const rows=[],warnings=[];
- for(const seg of segments){const joined=seg.lines.join(' | ');if(/instant cash out|payment issued|transfer completed|current balance/i.test(joined))continue;
+ for(const seg of segments){const joined=seg.lines.join(' | ');
+  if(/instant cash out|payment sent|payment issued|transfer completed|transfer complete|current balance/i.test(joined))continue;
+  let specialType=null;
+  if(/california\s+padsa.*?(?:health\s+subsidy|healthcare\s+subsidy)|health(?:care)?\s+subsidy/i.test(joined))specialType='health_subsidy';
+  else if(/earnings?\s+adjustment/i.test(joined))specialType='adjustment';
+  else if(/additional\s+tips?\s+added|additional\s+tips?/i.test(joined))specialType='extra_tips';
+  if(specialType){const amounts=[...joined.matchAll(moneyRegex)];const cents=amounts.length?amountCents(amounts[0][1]):null;
+   if(cents!==null&&cents>0)rows.push({kind:'special',date:seg.date,specialType,cents});else warnings.push(seg.date+' '+specialLabels[specialType]+' cần kiểm tra tiền');continue}
   const m=joined.match(timeRange);if(!m)continue;const start=parseTime(m[1],m[2],m[3]),end=parseTime(m[4],m[5],m[6]);if(!start||!end||duration(start,end)<=0||duration(start,end)>720)continue;
   if(/tips?\s+pending/i.test(joined)){warnings.push(seg.date+' '+start+' Tips pending');continue}
   if(!/\bpaid\b|\bbase\s*:|\btips\s*:|\bcompleted\b/i.test(joined)){warnings.push(seg.date+' '+start+' chưa rõ đã hoàn tất');continue}
-  // Base and Tips may be present on the same card; exclude their labels when finding the gross card total.
   const card=joined.replace(/\b(?:base|tips)\s*:\s*\$?\s*[\d,]+(?:\.\d{1,2})?/gi,'');
   const all=[...card.matchAll(moneyRegex)],gross=all.length?amountCents(all[0][1]):null;
   const base=joined.match(/\bbase\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i),tips=joined.match(/\btips\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
   const total=gross!==null?gross:(base&&tips?amountCents(base[1])+amountCents(tips[1]):null);
-  rows.push({date:seg.date,start,end,cents:total,baseCents:base?amountCents(base[1]):null,tipsCents:tips?amountCents(tips[1]):null});
+  rows.push({kind:'delivery',date:seg.date,start,end,cents:total,baseCents:base?amountCents(base[1]):null,tipsCents:tips?amountCents(tips[1]):null});
  }
  return {rows,warnings};
 }
-function importOCRImages(files){if(busy||!files.length)return;if(files.some(f=>!(f.type||'').startsWith('image/')&&!/\.(png|jpe?g|webp|heic|heif|bmp)$/i.test(f.name||''))){$('fin-income-status').textContent='Chỉ chọn file ảnh (PNG, JPG, HEIC, WEBP...).';$('fin-income-images').value='';return}busy=true;const isAppend=appendImages;appendImages=false;if(!isAppend){review=[];blockedPending=0;$('fin-income-confirm').checked=false}
+function importOCRImages(files){if(busy||!files.length)return;if(files.some(f=>!(f.type||'').startsWith('image/')&&!/\.(png|jpe?g|webp|heic|heif|bmp)$/i.test(f.name||''))){$('fin-income-status').textContent='Chỉ chọn file ảnh (PNG, JPG, HEIC, WEBP...).';$('fin-income-images').value='';return}busy=true;const isAppend=appendImages;appendImages=false;if(!isAppend){review=[];blockedPending=0;dupReview=0;$('fin-income-confirm').checked=false}
  $('fin-income-review').hidden=false;$('fin-income-status').textContent='Đang đọc '+files.length+' ảnh…';
  (async()=>{try{if(!window.Tesseract){await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(Error('Không tải được OCR khi offline'));document.head.append(sc)})}
    const warnings=[];for(let i=0;i<files.length;i++){$('fin-income-status').textContent=`Đang đọc ảnh ${i+1}/${files.length}: ${files[i].name}`;const result=await Tesseract.recognize(files[i],'eng');const parsed=parseIncomeOCR(result.data.text);review.push(...parsed.rows);blockedPending+=parsed.warnings.length;warnings.push(...parsed.warnings)}
    // Same block can occur in multiple screenshots: review it only once.
-   review=[...new Map(review.map(r=>[recordKey(r),r])).values()];updateReview();
+   const unmerged=review.length;review=[...new Map(review.map(r=>[recordKey(r),r])).values()];dupReview+=unmerged-review.length;updateReview();
    $('fin-income-status').textContent='Đã đọc '+files.length+' ảnh, kiểm tra kỹ ngày/giờ/tiền trong bảng trước khi lưu.'+(warnings.length?' Lưu ý: '+warnings.slice(0,3).join('; '):'');
   }catch(err){$('fin-income-status').textContent='Không thể nhận diện ảnh: '+err.message+'. Bạn có thể nhập tiền thủ công.';updateReview()}
   finally{busy=false;$('fin-income-images').value=''}
@@ -1010,21 +1036,28 @@ $('fin-income-upload').onclick=()=>incomeChoose(false);$('fin-income-more').oncl
 $('fin-income-source-photos').onclick=()=>{$('fin-income-source').hidden=true;$('fin-income-images').accept='image/*';$('fin-income-images').click()};
 $('fin-income-source-files').onclick=()=>{$('fin-income-source').hidden=true;$('fin-income-images').accept='*/*';$('fin-income-images').click()};
 $('fin-income-images').onchange=e=>importOCRImages([...e.target.files]);
-function addManual(){setupReviewRow({date:parseDate($('day')?.value)?$('day').value:today(),start:'',end:'',cents:null});$('fin-income-status').textContent='Nhập ngày, giờ và tổng tiền đã có Base + Tips.'}
-$('fin-income-add').onclick=addManual;$('fin-income-more-manual').onclick=addManual;
-$('fin-income-cancel').onclick=()=>{$('fin-income-review').hidden=true;review=[];blockedPending=0};
+function addManual(){setupReviewRow({kind:'delivery',date:parseDate($('day')?.value)?$('day').value:today(),start:'',end:'',cents:null});$('fin-income-status').textContent='Nhập ngày, giờ và tổng tiền đã có Base + Tips.'}
+function addSpecial(){setupReviewRow({kind:'special',date:parseDate($('day')?.value)?$('day').value:today(),specialType:'adjustment',cents:null});$('fin-income-status').textContent='Chọn loại khoản cộng thêm, ngày Amazon ghi nhận và số tiền. Không tính Instant Cash Out hay Payment sent.'}
+$('fin-income-add').onclick=addManual;$('fin-income-more-manual').onclick=addManual;$('fin-income-add-special').onclick=addSpecial;$('fin-income-more-special').onclick=addSpecial;
+$('fin-income-cancel').onclick=()=>{$('fin-income-review').hidden=true;review=[];blockedPending=0;dupReview=0};
 $('fin-income-save').onclick=()=>{
- if(!review.length){alert('Chưa có chuyến nào để lưu.');return}
- if(review.some(r=>!validIncome(r))){alert('Hãy kiểm tra ngày, giờ và số tiền tất cả chuyến trước khi lưu.');return}
- if(blockedPending){alert('Có '+blockedPending+' chuyến Tips pending trong ảnh. Vui lòng chờ Amazon cập nhật đầy đủ rồi upload lại ảnh, hoặc xóa lượt ảnh này trước khi lưu.');return}
- if(!$('fin-income-confirm').checked){alert('Hãy xác nhận đã đủ Base + Tips và đủ tất cả chuyến của những ngày sẽ chốt.');return}
- const distinct=new Map(review.map(r=>[recordKey(r),r]));if(distinct.size!==review.length&&!confirm('Có chuyến trùng giờ trong bản kiểm tra. Chỉ lưu một lần cho mỗi chuyến. Tiếp tục?'))return;
- const data=incomeLoad();const dates=[...new Set(review.map(r=>r.date))];
- // Each confirmed day is complete: replace its older rows rather than add stale overlapping rows. Other dates remain unchanged.
- const keys=new Map(data.records.filter(r=>!dates.includes(r.date)).map(r=>[recordKey(r),r]));
+ if(!review.length){alert('Chưa có mục thu nhập nào để lưu.');return}
+ if(review.some(r=>!validReview(r))){alert('Hãy kiểm tra ngày, giờ, loại khoản và số tiền của tất cả mục trước khi lưu.');return}
+ const deliveries=review.filter(r=>r.kind!=='special'),specials=review.filter(r=>r.kind==='special');
+ if(deliveries.length&&!$('fin-income-confirm').checked){alert('Hãy xác nhận đã đủ Base + Tips và đầy đủ chuyến của các ngày bạn sẽ chốt.');return}
+ if(blockedPending&&!confirm('Có '+blockedPending+' chuyến Tips pending đã bị bỏ qua. CHỈ tiếp tục nếu các ngày có chuyến trong bảng kiểm tra đã đủ mọi chuyến khác và đủ Tips. Nếu chưa, chọn Hủy và upload lại khi Amazon chốt Tips.'))return;
+ const distinct=new Map(deliveries.map(r=>[recordKey(r),r]));if(distinct.size!==deliveries.length&&!confirm('Có chuyến trùng ngày/giờ. Chỉ lưu một lần mỗi chuyến. Tiếp tục?'))return;
+ const specialMap=new Map(specials.map(r=>[specialKey(r),r]));if(specialMap.size!==specials.length&&!confirm('Các khoản cộng thêm có cùng loại, ngày và số tiền. Sẽ chỉ tính một lần để chống trùng. Tiếp tục?'))return;
+ const data=incomeLoad(),dates=[...new Set(deliveries.map(r=>r.date))];
+ // Upsert by day + start/end so overlapping screenshot re-uploads replace that block, never erase other saved blocks.
+ const keys=new Map(data.records.map(r=>[recordKey(r),r]));
  for(const r of distinct.values())keys.set(recordKey(r),{date:r.date,start:r.start,end:r.end,cents:r.cents,baseCents:r.baseCents??null,tipsCents:r.tipsCents??null,updatedAt:new Date().toISOString()});
- data.records=[...keys.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));data.finalDays=[...new Set([...data.finalDays,...dates])].sort();
- localStorage.setItem(MONEYKEY,JSON.stringify(data));pruneExpired();review=[];blockedPending=0;$('fin-income-review').hidden=true;renderIncome();$('fin-income-status').textContent='Đã chốt thu nhập '+dates.map(prettyDate).join(', ')+'. Không thay đổi giờ Rolling.';
+ const extras=new Map(data.specials.map(r=>[specialKey(r),r]));let duplicates=0;
+ for(const r of specialMap.values()){const k=specialKey(r);if(extras.has(k)){duplicates++;continue}extras.set(k,{date:r.date,specialType:r.specialType,cents:r.cents,updatedAt:new Date().toISOString()})}
+ data.records=[...keys.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
+ data.specials=[...extras.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.specialType.localeCompare(b.specialType));
+ data.finalDays=[...new Set([...data.finalDays,...dates])].sort();data.version=2;
+ localStorage.setItem(MONEYKEY,JSON.stringify(data));pruneExpired();review=[];blockedPending=0;dupReview=0;$('fin-income-review').hidden=true;renderIncome();$('fin-income-status').textContent='Đã lưu '+deliveries.length+' chuyến, '+(specialMap.size-duplicates)+' khoản cộng thêm mới'+(duplicates?' · bỏ qua '+duplicates+' khoản đã có':'')+'. Không thay đổi giờ Rolling.';
 };
 function healthEstimate(h,q,asDate){if(!Number.isSafeInteger(h.confirmedMinutes)||!parseDate(h.asOf)||h.asOf<q.from||h.asOf>asDate)return {confirmed:null,estimated:null,unconfirmed:0};
  const end=asDate<q.to?asDate:q.to,unconfirmed=nextDay(h.asOf,1)<=end?totalDays(rolling(),nextDay(h.asOf,1),end):0;return {confirmed:h.confirmedMinutes,estimated:h.confirmedMinutes+unconfirmed,unconfirmed};}
@@ -1078,7 +1111,7 @@ const checkHealthcare=h=>{if(!h||typeof h!=='object')throw Error('Dữ liệu He
  }
 };
 window.flexFinanceValidate=(p)=>{
- if(p.income!==undefined){if(!p.income||typeof p.income!=='object'||!Array.isArray(p.income.records)||!Array.isArray(p.income.finalDays)||p.income.records.some(r=>!validIncome(r))||p.income.finalDays.some(d=>!parseDate(d)))throw Error('Dữ liệu thu nhập trong JSON không hợp lệ');}
+ if(p.income!==undefined){if(!p.income||typeof p.income!=='object'||!Array.isArray(p.income.records)||!Array.isArray(p.income.finalDays)||(p.income.specials!==undefined&&(!Array.isArray(p.income.specials)||p.income.specials.some(r=>!validSpecial(r))))||p.income.records.some(r=>!validIncome(r))||p.income.finalDays.some(d=>!parseDate(d)))throw Error('Dữ liệu thu nhập trong JSON không hợp lệ');}
  if(p.healthcare!==undefined)checkHealthcare(p.healthcare);
 };
 window.flexFinanceImport=p=>{window.flexFinanceValidate(p);
