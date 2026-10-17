@@ -748,7 +748,7 @@ function exportFullBackup(){
    }))};
   const payload={version:BACKUP_VERSION,app:'flex-rolling-7-days',exportedAt:now.toISOString(),
    entries,blocks:itemized,baseline,settledDates:settled,
-   preferences:{cap:Number($('cap').value)||40,selectedDay},summary};
+   preferences:{cap:Number($('cap').value)||40,selectedDay},summary,...(window.flexFinanceExport?.()||{})};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');
   const hhmmss=[now.getHours(),now.getMinutes(),now.getSeconds()].map(n=>String(n).padStart(2,'0')).join('');
   link.href=url;link.download='flex-rolling-update-v3-'+iso(now)+'-'+hhmmss+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
@@ -766,6 +766,8 @@ async function importFullBackup(file){
   const cap=Number(pref.cap),day=pref.selectedDay;
   const message='Khôi phục JSON v'+payload.version+' với '+Object.keys(restoredEntries).length+' ngày và '+restoredBlocks.length+' block.\n\nDữ liệu giờ chạy, Reserve và lịch sử hiện tại trên thiết bị sẽ bị THAY THẾ. Hãy sao lưu bản hiện tại trước.\n\n'+(Number(payload.version)===2?'Lưu ý: JSON v2 không chứa lịch sử từng block; lịch sử hiện tại sẽ bị thay thế bằng danh sách trống.\n\n':'')+(session?'Bạn đang đăng nhập Supabase: bản khôi phục có thể được tải lên cloud ở lần đồng bộ tiếp theo.\n\n':'')+'Tiếp tục?';
   if(!confirm(message))return;
+  // Validate optional finance fields before changing the legacy Rolling stores.
+  if(window.flexFinanceValidate)window.flexFinanceValidate(payload);
   // Validate everything before any writes. Restore both stores together, then refresh.
   localStorage.setItem(KEY,JSON.stringify(restoredEntries));
   records=restoredBlocks;
@@ -779,6 +781,7 @@ async function importFullBackup(file){
   if(window.flexRefresh)window.flexRefresh();
   renderExtra();
   if(session)queueSync();
+  if(window.flexFinanceImport)window.flexFinanceImport(payload);
   alert('Đã khôi phục thành công dữ liệu JSON v'+payload.version+'.');
  }catch(err){alert('Không thể khôi phục: '+err.message)}
  finally{$('importFile').value=''}
@@ -793,4 +796,306 @@ reconcileActiveReserves();
 renderExtra();
 })();
 </script>
+<!-- BEGIN isolated Income + Healthcare modules; Rolling algorithms unchanged -->
+<style>
+#flex-income-card .fin-line,#flex-health-card .fin-line{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:5px 0}
+.fin-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.fin-tile{background:#eff6fb;border-radius:12px;padding:12px;min-width:0}.fin-tile small{display:block;color:#607789;font-size:12px;line-height:1.45}.fin-tile strong{display:block;color:#173955;font-size:clamp(18px,4.8vw,24px);line-height:1.45;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.fin-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.fin-inputs>*{min-width:0}.fin-inputs input{width:100%;box-sizing:border-box;font-size:16px;min-width:0}
+.fin-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.fin-actions button{flex:1;min-width:140px}
+.fin-review-row{border:1px solid #d7e6ee;border-radius:12px;padding:11px;margin:10px 0;background:white}.fin-review-row .fin-inputs{margin:5px 0}
+.fin-review-row label{display:block;font-size:12px;color:#48647a;margin:5px 0}.fin-review-row input{width:100%;max-width:100%;box-sizing:border-box;font-size:16px}
+.fin-status{font-size:12px;color:#557083;line-height:1.6}.fin-good{color:#008264!important}.fin-bad{color:#bb342a!important}.fin-strong{font-weight:800;font-variant-numeric:tabular-nums}
+.fin-goal{border:1px solid #d6e6ed;border-radius:12px;padding:12px;min-width:0;background:#fbfdff}.fin-goal strong{font-size:clamp(19px,5vw,24px);white-space:nowrap}.fin-goal .fin-label{font-size:12px;color:#557083}
+.fin-mini{font-size:12px;color:#58758a}.fin-review-count{font-weight:750;padding:8px 0}
+#flex-income-card details>summary,#flex-health-card details>summary{cursor:pointer;font-weight:750;font-size:20px;line-height:1.4}
+#flex-income-card details>summary::marker,#flex-health-card details>summary::marker{color:#607789}
+#fin-income-review[hidden],#fin-manual-fields[hidden]{display:none!important}
+@media(max-width:370px){.fin-cols{gap:7px}.fin-tile{padding:9px}.fin-goal{padding:9px}.fin-goal strong{font-size:19px}}
+</style>
+<section class="card" id="flex-income-card"><details><summary>Thu nhập · Ngày / Tuần / Tháng / $ mỗi giờ</summary>
+<p class="note">Chỉ upload Earnings sau khi Base + Tips đã đầy đủ. Ảnh có <b>Tips pending</b> sẽ bị bỏ qua. Thu nhập ghi về <b>ngày chạy</b>, không phải ngày upload; chức năng này không sửa giờ Rolling.</p>
+<div class="fin-cols">
+<div class="fin-tile"><small>Tiền ngày đang xem</small><strong id="fin-income-day">—</strong><div class="fin-mini" id="fin-income-day-split">Base / Tips: —</div></div>
+<div class="fin-tile"><small>Tiền tuần (T2–CN)</small><strong id="fin-income-week">—</strong><div class="fin-mini" id="fin-income-week-split">Base / Tips: —</div></div>
+<div class="fin-tile"><small>Tiền tháng hiện tại</small><strong id="fin-income-month">—</strong></div>
+<div class="fin-tile"><small>Base / Tips (tháng)</small><strong id="fin-income-split">—</strong></div>
+<div class="fin-tile"><small>Trung bình / giờ (ngày đã chốt tiền)</small><strong id="fin-income-rate">—</strong></div>
+<div class="fin-tile"><small>Ngày đã chạy chưa chốt tiền (trong tuần)</small><strong id="fin-income-unfinished">—</strong></div>
+</div>
+<div class="fin-actions"><button id="fin-income-upload" type="button">📷 Upload Earnings đủ tips</button><button id="fin-income-add" class="secondary" type="button">＋ Nhập tiền thủ công</button></div>
+<div id="fin-income-source" hidden class="flex-panel" style="margin:10px 0">
+<b>Chọn nơi lấy ảnh Earnings</b>
+<div class="fin-actions"><button type="button" class="secondary" id="fin-income-source-photos">🖼️ Ảnh / Google Photos</button><button type="button" id="fin-income-source-files">📁 My Files / Screenshots</button></div>
+</div>
+<input type="file" id="fin-income-images" accept="image/*" multiple hidden>
+<div class="fin-status" id="fin-income-status">Chưa chọn ảnh. Có thể upload nhiều ảnh của các ngày đã qua trong cùng một lần.</div>
+<div id="fin-income-review" hidden>
+<h3 style="margin:12px 0">Kiểm tra tiền trước khi lưu</h3>
+<div class="fin-status">Kiểm tra ngày, giờ và số tiền từng chuyến. Bỏ ảnh thiếu thông tin hoặc đang Tips pending. Nếu OCR bỏ sót chuyến, thêm thủ công.</div>
+<div id="fin-income-review-list"></div>
+<div class="fin-actions"><button type="button" id="fin-income-more" class="secondary">＋ Thêm ảnh</button><button type="button" id="fin-income-more-manual" class="secondary">＋ Thêm chuyến</button></div>
+<div id="fin-income-review-summary" class="fin-review-count"></div>
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55"><input type="checkbox" id="fin-income-confirm" style="width:20px;height:20px;flex:none;margin-top:2px"> Tôi xác nhận Base + Tips đã hoàn tất và các chuyến của từng ngày liệt kê đã đầy đủ.</label>
+<div class="fin-actions"><button id="fin-income-save" type="button">Lưu thu nhập cuối cùng</button><button id="fin-income-cancel" type="button" class="secondary">Đóng</button></div>
+</div>
+<div class="flex-panel" id="fin-income-retention"><div class="fin-line"><b id="fin-income-current-month">Tháng hiện tại</b><span id="fin-income-retention-label">—</span></div><div class="fin-status" id="fin-income-retention-status">Giữ tháng trước thêm 7 ngày; sau đó chỉ dọn khi đủ Tips.</div></div>
+<details class="flex-panel" id="fin-income-prior-wrap" hidden><summary id="fin-income-prior-title">Tháng trước · Tạm giữ</summary><div class="fin-status" id="fin-income-prior-status"></div><div id="fin-income-prior"></div></details>
+<details class="flex-panel"><summary>Chi tiết tiền đã lưu</summary><div id="fin-income-history"></div></details>
+</details></section>
+<section class="card" id="flex-health-card"><details><summary>Healthcare Subsidy · Buffer / EST</summary><p class="note" id="fin-h-quarter-label">Chỉ theo dõi quý hiện tại; quý trước giữ thêm 7 ngày.</p><div id="fin-h-old-quarter" class="fin-status" hidden></div>
+<div class="fin-cols">
+<div class="fin-tile"><small>Amazon xác nhận</small><strong id="fin-h-confirmed">—</strong><div class="fin-mini" id="fin-h-asof"></div></div>
+<div class="fin-tile"><small>Ước tính hiện tại</small><strong id="fin-h-estimated">—</strong><div class="fin-mini">Giờ Amazon + Completed chưa cập nhật</div></div>
+</div>
+<div class="flex-panel"><b>Cập nhật giờ Amazon</b><div class="fin-inputs"><div><label for="fin-h-hours">Tổng giờ (h)</label><input id="fin-h-hours" type="number" min="0" max="3000" step="1" placeholder="69"></div><div><label for="fin-h-minutes">Phút (0–59)</label><input id="fin-h-minutes" type="number" min="0" max="59" step="1" placeholder="58"></div></div><label for="fin-h-date">Amazon ghi nhận đến ngày (As of)</label><input id="fin-h-date" type="date" style="width:100%;box-sizing:border-box;font-size:16px"><div class="fin-actions"><button id="fin-h-save" type="button">Lưu giờ Amazon</button></div><div class="fin-status" id="fin-h-status">Chỉ cập nhật khi Amazon thay đổi số giờ. Không làm thay đổi Rolling.</div></div>
+<div class="flex-panel"><b>Dự định nghỉ · From / To</b><div class="fin-inputs"><div><label for="fin-h-from">From · Từ ngày</label><input id="fin-h-from" type="date"></div><div><label for="fin-h-to">To · Đến ngày</label><input id="fin-h-to" type="date"></div></div><div class="fin-actions"><button id="fin-h-rest-save" type="button">Lưu ngày nghỉ</button><button id="fin-h-rest-clear" class="secondary" type="button">Xóa lịch nghỉ</button></div><div class="fin-status" id="fin-h-rest-status">Lịch nghỉ chỉ dùng để dự báo, không đặt ngày nghỉ vào Rolling.</div></div>
+<h3 style="margin:12px 0 8px">Buffer & Ngày dự kiến đạt mốc</h3>
+<div class="fin-cols"><div class="fin-goal" id="fin-h-goal197"></div><div class="fin-goal" id="fin-h-goal328"></div></div>
+<details class="flex-panel"><summary>ⓘ Lưu ý</summary><p class="fin-status">Buffer và EST chỉ mang tính ước tính theo tiến độ hiện tại. Giờ Completed trong app có thể khác giờ đủ điều kiện Healthcare Subsidy của Amazon. Dự báo tính theo ngày lịch, loại các ngày nghỉ dự kiến; không đảm bảo sẽ nhận trợ cấp. Proof of coverage phải đáp ứng điều kiện của Amazon.</p></details>
+</details></section>
+<script>
+(()=>{'use strict';
+// Isolated read-only consumer of the existing Rolling stores. Do not write flex-rolling-v2 / block / baseline / settled keys.
+const MONEYKEY='flex-income-final-v1',HEALTHKEY='flex-healthcare-progress-v1',ROLLINGKEY='flex-rolling-v2';
+const $=id=>document.getElementById(id);
+const read=(key,otherwise)=>{try{const x=JSON.parse(localStorage.getItem(key));return x===null?otherwise:x}catch{return otherwise}};
+const pad=x=>String(x).padStart(2,'0');
+const localISO=date=>`${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+const today=()=>localISO(new Date());
+const parseDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return null;const d=new Date(Number(s.slice(0,4)),Number(s.slice(5,7))-1,Number(s.slice(8)),12);return localISO(d)===s?d:null};
+const nextDay=(date,offset)=>{const d=parseDate(date);if(!d)return null;d.setDate(d.getDate()+offset);return localISO(d)};
+const dayCount=(a,b)=>{const x=parseDate(a),y=parseDate(b);return x&&y?Math.round((y-x)/86400000)+1:0};
+const quarter=(date)=>{const d=parseDate(date)||new Date(),y=d.getFullYear(),q=Math.floor(d.getMonth()/3),from=`${y}-${pad(1+q*3)}-01`,to=localISO(new Date(y,q*3+3,0,12));return {key:y+'-Q'+(q+1),from,to,days:dayCount(from,to)}};
+const fmtMinutes=m=>{m=Math.max(0,Math.round(m||0));return Math.floor(m/60)+'h'+pad(m%60)+'m'};
+const fmtMoney=c=>'$'+(Math.round(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const prettyDate=s=>s?`${s.slice(8)}/${s.slice(5,7)}/${s.slice(0,4)}`:'—';
+const rolling=()=>read(ROLLINGKEY,{});
+const validMoney=r=>r&&parseDate(r.date)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.start||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.end||'')&&r.end>r.start&&Number.isSafeInteger(r.cents)&&r.cents>=0&&r.cents<=100000000;
+const incomeLoad=()=>{const o=read(MONEYKEY,{version:1,records:[],finalDays:[]});return o&&Array.isArray(o.records)&&Array.isArray(o.finalDays)?o:{version:1,records:[],finalDays:[]}};
+const ym=d=>d.slice(0,7);
+const monthLabel=k=>k&&/^\d{4}-\d{2}$/.test(k)?k.slice(5)+'/'+k.slice(0,4):'—';
+const monthAfter=k=>{const d=parseDate(k+'-01');if(!d)return null;d.setMonth(d.getMonth()+1);return localISO(d).slice(0,7)};
+const monthPurgeDate=k=>{const next=monthAfter(k);return next?next+'-08':null};
+const incomeMonths=data=>[...new Set([...data.records.map(r=>ym(r.date)),...data.finalDays.map(ym)])].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
+const incompleteMonth=(k,data,entries)=>Object.entries(entries).filter(([date,v])=>ym(date)===k&&Number(v?.a)>0&&!data.finalDays.includes(date)).map(([date])=>date).sort();
+function pruneIncome(){const data=incomeLoad(),current=ym(today()),entries=rolling();const months=incomeMonths(data);let expired=[];
+ for(const m of months){if(m>=current||today()<(monthPurgeDate(m)||'9999-12-31'))continue;
+  // Amazon does not expose a final-Tips flag: completed workdays not confirmed via Earnings block deletion.
+  if(incompleteMonth(m,data,entries).length===0)expired.push(m);
+ }
+ if(expired.length){const old=data.records.length+data.finalDays.length;data.records=data.records.filter(r=>!expired.includes(ym(r.date)));data.finalDays=data.finalDays.filter(d=>!expired.includes(ym(d)));
+  if(old!==data.records.length+data.finalDays.length)localStorage.setItem(MONEYKEY,JSON.stringify(data));
+ }
+ return data;}
+
+const hcLoad=()=>{const q=quarter(today()),store=read(HEALTHKEY,{});
+ const o=store?.quarters?.[q.key]||(store?.quarter===q.key?store:null);
+ return o?{quarter:q.key,confirmedMinutes:o.confirmedMinutes??null,asOf:o.asOf||'',vacationFrom:o.vacationFrom||'',vacationTo:o.vacationTo||''}:{quarter:q.key,confirmedMinutes:null,asOf:'',vacationFrom:'',vacationTo:''};};
+const hcStore=()=>{const o=read(HEALTHKEY,{});if(o&&o.quarters&&typeof o.quarters==='object'&&!Array.isArray(o.quarters))return o;
+ return {version:1,quarters:o?.quarter?{[o.quarter]:o}:{}};};
+const hcSave=h=>{const store=hcStore();store.quarters[h.quarter]=h;localStorage.setItem(HEALTHKEY,JSON.stringify(store));};
+function pruneHealthcare(){const store=hcStore(),now=today(),current=quarter(now).key;let changed=false;
+ for(const key of Object.keys(store.quarters)){
+  if(!/^20\d{2}-Q[1-4]$/.test(key)){delete store.quarters[key];changed=true;continue}
+  const y=Number(key.slice(0,4)),n=Number(key.slice(-1));const end=localISO(new Date(y,n*3,0,12));
+  // Q4 ends Dec 31; retain Jan 1–7, delete beginning Jan 8.
+  if(key!==current&&now>=nextDay(end,8)){delete store.quarters[key];changed=true}
+ }
+ if(changed)localStorage.setItem(HEALTHKEY,JSON.stringify(store));return store;
+}
+function pruneExpired(){pruneIncome();pruneHealthcare();}
+
+const totalDays=(entries,from,to)=>Object.entries(entries).reduce((sum,[d,v])=>sum+(d>=from&&d<=to&&v&&Number.isSafeInteger(Number(v.a))&&Number(v.a)>0?Number(v.a):0),0);
+const monday=s=>{let d=parseDate(s)||new Date();d.setDate(d.getDate()-(d.getDay()+6)%7);return localISO(d)};
+const duration=(start,end)=>{const [h,m]=start.split(':').map(Number),[h2,m2]=end.split(':').map(Number);return h2*60+m2-h*60-m};
+const recordKey=r=>r.date+'|'+r.start+'|'+r.end;
+const validIncome=r=>validMoney(r)&&['baseCents','tipsCents'].every(k=>r[k]===null||r[k]===undefined||(Number.isSafeInteger(r[k])&&r[k]>=0&&r[k]<=100000000))&&(!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents)||r.baseCents+r.tipsCents===r.cents);
+let review=[],busy=false,appendImages=false,blockedPending=0,healthInputsDirty=false,vacInputsDirty=false;
+function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.value)?$('day').value:today(),weekStart=monday(selected),weekEnd=nextDay(weekStart,6),entries=rolling(),current=ym(today());
+ const sum=arr=>arr.reduce((n,r)=>n+r.cents,0),day=data.records.filter(r=>r.date===selected),week=data.records.filter(r=>r.date>=weekStart&&r.date<=weekEnd),month=data.records.filter(r=>ym(r.date)===current);
+ const weekFin=data.finalDays.filter(d=>d>=weekStart&&d<=weekEnd),mins=weekFin.reduce((n,d)=>n+(Number(entries[d]?.a)||0),0);
+ const missing=Object.keys(entries).filter(d=>d>=weekStart&&d<=weekEnd&&(Number(entries[d]?.a)||0)>0&&!data.finalDays.includes(d)).length;
+ const split=arr=>{const b=arr.filter(r=>Number.isSafeInteger(r.baseCents)).reduce((a,r)=>a+r.baseCents,0),t=arr.filter(r=>Number.isSafeInteger(r.tipsCents)).reduce((a,r)=>a+r.tipsCents,0),partial=arr.some(r=>!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents));return !arr.length?'—':(fmtMoney(b)+' / '+fmtMoney(t))+(partial?' *':'')};
+ $('fin-income-day').textContent=data.finalDays.includes(selected)?fmtMoney(sum(day)):'Chưa chốt';
+ $('fin-income-week').textContent=week.length?fmtMoney(sum(week)):'—';
+ $('fin-income-day-split').textContent='Base / Tips: '+split(day);
+ $('fin-income-week-split').textContent='Base / Tips: '+split(week);
+ $('fin-income-month').textContent=month.length?fmtMoney(sum(month)):'—';
+ $('fin-income-split').textContent=split(month);
+ $('fin-income-rate').textContent=mins>0?fmtMoney(Math.round(sum(week)*60/mins))+'/h':'—';
+ $('fin-income-unfinished').textContent=missing+' ngày';
+ $('fin-income-current-month').textContent='Tháng '+monthLabel(current);
+ const prior=(()=>{const d=parseDate(today());d.setMonth(d.getMonth()-1);return localISO(d).slice(0,7)})();
+ const priorRecords=data.records.filter(r=>ym(r.date)===prior),priorDone=data.finalDays.filter(d=>ym(d)===prior);
+ const priorMissing=incompleteMonth(prior,data,entries),priorHas=priorRecords.length>0||priorDone.length>0;
+ const grace=today()<prior+'-08'?false:today()<(monthPurgeDate(prior)||'9999-12-31');
+ $('fin-income-retention-label').textContent='Tự chuyển ngày 01';
+ $('fin-income-retention-status').textContent='Tháng trước giữ từ ngày 01–07. Từ ngày 08 chỉ dọn khi mọi ngày chạy đã chốt Base + Tips. * Base/Tips có dấu * nếu ảnh chưa tách đủ.';
+ $('fin-income-prior-wrap').hidden=!priorHas;
+ if(priorHas){$('fin-income-prior-title').textContent='Tháng '+monthLabel(prior)+' · '+(today()<(monthPurgeDate(prior)||'9999-12-31')?'Giữ 7 ngày đầu tháng mới':priorMissing.length?'Còn Tips/ngày chưa chốt':'Đã chốt');
+  $('fin-income-prior-status').textContent=priorMissing.length?priorMissing.length+' ngày đã chạy chưa chốt tiền: '+priorMissing.map(prettyDate).join(', '):'Tất cả ngày chạy đã chốt tiền.';
+  $('fin-income-prior').textContent='Tổng tiền đã lưu: '+fmtMoney(sum(priorRecords))+' · Base / Tips: '+split(priorRecords);
+ }
+ const div=$('fin-income-history');div.replaceChildren();const groups={};
+ for(const r of data.records){(groups[r.date]??=[]).push(r)}
+ for(const day of data.finalDays){if(!groups[day])groups[day]=[]}
+ const dates=Object.keys(groups).sort().reverse();for(const date of dates){const rows=groups[date];const box=document.createElement('div');box.className='fin-history-day';const sumDay=sum(rows);
+  const heading=document.createElement('div');heading.className='fin-line';const title=document.createElement('b');title.textContent=prettyDate(date);const amount=document.createElement('b');amount.textContent=fmtMoney(sumDay);heading.append(title,amount);box.append(heading);
+  const caption=document.createElement('div');caption.className='fin-mini';caption.textContent=rows.length+' chuyến · Base / Tips: '+split(rows);box.append(caption);div.append(box);
+ }
+ if(!dates.length)div.textContent='Chưa có thu nhập nào.';
+}
+function setupReviewRow(item){const r={...item};review.push(r);updateReview()}
+function updateReview(){const root=$('fin-income-review-list');root.replaceChildren();let idx=0;
+ for(const r of review){const id=idx++;const outer=document.createElement('div');outer.className='fin-review-row';
+  const fields=[['Ngày','date','date'],['Bắt đầu','time','start'],['Kết thúc','time','end'],['Tiền tổng ($)','number','amount'],['Base ($) · nếu biết','number','base'],['Tips ($) · nếu biết','number','tips']];const grid=document.createElement('div');grid.className='fin-inputs';
+  for(const [label,type,key] of fields){const wrap=document.createElement('div'),l=document.createElement('label'),input=document.createElement('input');l.textContent=label;input.type=type;input.step=type==='number'?'0.01':'any';input.min=type==='number'?'0':undefined;input.value=key==='amount'?(r.cents===null?'':(r.cents/100).toFixed(2)):(key==='base'||key==='tips')?(Number.isSafeInteger(r[key+'Cents'])?(r[key+'Cents']/100).toFixed(2):''):r[key]||'';
+   input.addEventListener('input',()=>{if(key==='amount'||key==='base'||key==='tips'){const n=Number(input.value),c=input.value.trim()!==''&&Number.isFinite(n)&&n>=0&&n<=1000000?Math.round(n*100):null;if(key==='amount')r.cents=c;else r[key+'Cents']=c}else r[key]=input.value;updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
+  const controls=document.createElement('div');controls.className='fin-actions';const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Bỏ chuyến';del.onclick=()=>{review=review.filter(x=>x!==r);updateReview()};controls.append(del);
+  outer.append(grid,controls);root.append(outer);
+ }
+ updateReviewSummary();$('fin-income-review').hidden=false;
+}
+function updateReviewSummary(){const good=review.filter(validIncome),dates=[...new Set(good.map(r=>r.date))];const cash=good.reduce((s,r)=>s+r.cents,0),invalid=review.length-good.length;
+ $('fin-income-review-summary').textContent=`${good.length} chuyến hợp lệ · ${dates.length} ngày · ${fmtMoney(cash)}${invalid?' · '+invalid+' chuyến cần sửa':''}${blockedPending?' · '+blockedPending+' chuyến Tips pending bị bỏ qua':''}`;
+ $('fin-income-confirm').checked=false;
+}
+const dateEnglish=line=>{
+ let m=line.match(/\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/);if(m)return [Number(m[1]),Number(m[2]),Number(m[3]),null];
+ const wd='(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)',mon='(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)';
+ m=line.match(new RegExp('\\b('+wd+')?(?:day)?\\s*,?\\s*'+mon+'(?:[a-z]*)?\\s+(\\d{1,2})(?:,?\\s+(20\\d{2}))?\\b','i'));
+ if(!m)return null;return [m[4]?Number(m[4]):null,['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(m[2].toLowerCase())+1,Number(m[3]),m[1]?.toLowerCase().slice(0,3)||null]
+};
+function inferEnglishDate(info){if(!info)return '';const [year,month,day,wd]=info,n=new Date(),candidates=[];
+ for(const y of year?[year]:[n.getFullYear()-1,n.getFullYear(),n.getFullYear()+1]){const d=new Date(y,month-1,day,12);if(d.getFullYear()!==y||d.getMonth()!==month-1||d.getDate()!==day)continue;
+  if(wd&&d.getDay()!==['sun','mon','tue','wed','thu','fri','sat'].indexOf(wd))continue;candidates.push(d)}
+ candidates.sort((a,b)=>Math.abs(a-n)-Math.abs(b-n));return candidates[0]?localISO(candidates[0]):'';
+}
+const parseTime=(h,m,ap)=>{let hh=Number(h),mm=Number(m);if(hh<1||hh>12||mm>59)return null;hh=hh%12+(ap.toUpperCase()==='PM'?12:0);return pad(hh)+':'+pad(mm)};
+const timeRange=/\b(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*(AM|PM)\b/i;
+const moneyRegex=/\$\s*([\d,]+(?:\.\d{1,2})?)/g;
+const amountCents=s=>{const n=Number(String(s).replace(/,/g,''));return Number.isFinite(n)?Math.round(n*100):null};
+function parseIncomeOCR(text){let lines=String(text).replace(/[–—−]/g,'-').split(/\n/).map(s=>s.trim()).filter(Boolean),segments=[],group=null;
+ for(const line of lines){const info=dateEnglish(line),date=inferEnglishDate(info);if(date){if(group)segments.push(group);group={date,lines:[line]}}else if(group)group.lines.push(line)}if(group)segments.push(group);
+ const rows=[],warnings=[];
+ for(const seg of segments){const joined=seg.lines.join(' | ');if(/instant cash out|payment issued|transfer completed|current balance/i.test(joined))continue;
+  const m=joined.match(timeRange);if(!m)continue;const start=parseTime(m[1],m[2],m[3]),end=parseTime(m[4],m[5],m[6]);if(!start||!end||duration(start,end)<=0||duration(start,end)>720)continue;
+  if(/tips?\s+pending/i.test(joined)){warnings.push(seg.date+' '+start+' Tips pending');continue}
+  if(!/\bpaid\b|\bbase\s*:|\btips\s*:|\bcompleted\b/i.test(joined)){warnings.push(seg.date+' '+start+' chưa rõ đã hoàn tất');continue}
+  // Base and Tips may be present on the same card; exclude their labels when finding the gross card total.
+  const card=joined.replace(/\b(?:base|tips)\s*:\s*\$?\s*[\d,]+(?:\.\d{1,2})?/gi,'');
+  const all=[...card.matchAll(moneyRegex)],gross=all.length?amountCents(all[0][1]):null;
+  const base=joined.match(/\bbase\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i),tips=joined.match(/\btips\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const total=gross!==null?gross:(base&&tips?amountCents(base[1])+amountCents(tips[1]):null);
+  rows.push({date:seg.date,start,end,cents:total,baseCents:base?amountCents(base[1]):null,tipsCents:tips?amountCents(tips[1]):null});
+ }
+ return {rows,warnings};
+}
+function importOCRImages(files){if(busy||!files.length)return;if(files.some(f=>!(f.type||'').startsWith('image/')&&!/\.(png|jpe?g|webp|heic|heif|bmp)$/i.test(f.name||''))){$('fin-income-status').textContent='Chỉ chọn file ảnh (PNG, JPG, HEIC, WEBP...).';$('fin-income-images').value='';return}busy=true;const isAppend=appendImages;appendImages=false;if(!isAppend){review=[];blockedPending=0;$('fin-income-confirm').checked=false}
+ $('fin-income-review').hidden=false;$('fin-income-status').textContent='Đang đọc '+files.length+' ảnh…';
+ (async()=>{try{if(!window.Tesseract){await new Promise((ok,err)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>err(Error('Không tải được OCR khi offline'));document.head.append(sc)})}
+   const warnings=[];for(let i=0;i<files.length;i++){$('fin-income-status').textContent=`Đang đọc ảnh ${i+1}/${files.length}: ${files[i].name}`;const result=await Tesseract.recognize(files[i],'eng');const parsed=parseIncomeOCR(result.data.text);review.push(...parsed.rows);blockedPending+=parsed.warnings.length;warnings.push(...parsed.warnings)}
+   // Same block can occur in multiple screenshots: review it only once.
+   review=[...new Map(review.map(r=>[recordKey(r),r])).values()];updateReview();
+   $('fin-income-status').textContent='Đã đọc '+files.length+' ảnh, kiểm tra kỹ ngày/giờ/tiền trong bảng trước khi lưu.'+(warnings.length?' Lưu ý: '+warnings.slice(0,3).join('; '):'');
+  }catch(err){$('fin-income-status').textContent='Không thể nhận diện ảnh: '+err.message+'. Bạn có thể nhập tiền thủ công.';updateReview()}
+  finally{busy=false;$('fin-income-images').value=''}
+ })();
+}
+const incomeChoose=append=>{appendImages=append;
+ if($('flex-pick-files')){$('fin-income-source').hidden=false;return}
+ $('fin-income-images').accept='image/*';$('fin-income-images').click();};
+$('fin-income-upload').onclick=()=>incomeChoose(false);$('fin-income-more').onclick=()=>incomeChoose(true);
+$('fin-income-source-photos').onclick=()=>{$('fin-income-source').hidden=true;$('fin-income-images').accept='image/*';$('fin-income-images').click()};
+$('fin-income-source-files').onclick=()=>{$('fin-income-source').hidden=true;$('fin-income-images').accept='*/*';$('fin-income-images').click()};
+$('fin-income-images').onchange=e=>importOCRImages([...e.target.files]);
+function addManual(){setupReviewRow({date:parseDate($('day')?.value)?$('day').value:today(),start:'',end:'',cents:null});$('fin-income-status').textContent='Nhập ngày, giờ và tổng tiền đã có Base + Tips.'}
+$('fin-income-add').onclick=addManual;$('fin-income-more-manual').onclick=addManual;
+$('fin-income-cancel').onclick=()=>{$('fin-income-review').hidden=true;review=[];blockedPending=0};
+$('fin-income-save').onclick=()=>{
+ if(!review.length){alert('Chưa có chuyến nào để lưu.');return}
+ if(review.some(r=>!validIncome(r))){alert('Hãy kiểm tra ngày, giờ và số tiền tất cả chuyến trước khi lưu.');return}
+ if(blockedPending){alert('Có '+blockedPending+' chuyến Tips pending trong ảnh. Vui lòng chờ Amazon cập nhật đầy đủ rồi upload lại ảnh, hoặc xóa lượt ảnh này trước khi lưu.');return}
+ if(!$('fin-income-confirm').checked){alert('Hãy xác nhận đã đủ Base + Tips và đủ tất cả chuyến của những ngày sẽ chốt.');return}
+ const distinct=new Map(review.map(r=>[recordKey(r),r]));if(distinct.size!==review.length&&!confirm('Có chuyến trùng giờ trong bản kiểm tra. Chỉ lưu một lần cho mỗi chuyến. Tiếp tục?'))return;
+ const data=incomeLoad();const dates=[...new Set(review.map(r=>r.date))];
+ // Each confirmed day is complete: replace its older rows rather than add stale overlapping rows. Other dates remain unchanged.
+ const keys=new Map(data.records.filter(r=>!dates.includes(r.date)).map(r=>[recordKey(r),r]));
+ for(const r of distinct.values())keys.set(recordKey(r),{date:r.date,start:r.start,end:r.end,cents:r.cents,baseCents:r.baseCents??null,tipsCents:r.tipsCents??null,updatedAt:new Date().toISOString()});
+ data.records=[...keys.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));data.finalDays=[...new Set([...data.finalDays,...dates])].sort();
+ localStorage.setItem(MONEYKEY,JSON.stringify(data));pruneExpired();review=[];blockedPending=0;$('fin-income-review').hidden=true;renderIncome();$('fin-income-status').textContent='Đã chốt thu nhập '+dates.map(prettyDate).join(', ')+'. Không thay đổi giờ Rolling.';
+};
+function healthEstimate(h,q,asDate){if(!Number.isSafeInteger(h.confirmedMinutes)||!parseDate(h.asOf)||h.asOf<q.from||h.asOf>asDate)return {confirmed:null,estimated:null,unconfirmed:0};
+ const end=asDate<q.to?asDate:q.to,unconfirmed=nextDay(h.asOf,1)<=end?totalDays(rolling(),nextDay(h.asOf,1),end):0;return {confirmed:h.confirmedMinutes,estimated:h.confirmedMinutes+unconfirmed,unconfirmed};}
+function scheduleGoal(target,actual,q,h,now){const elapsed=Math.min(q.days,Math.max(0,dayCount(q.from,now))),buffer=actual-target*60*elapsed/q.days,days=buffer/(target*60/q.days),pace=elapsed?actual/elapsed:0;
+ let finalDate=null,forecastEnd=actual;
+ if(actual>=target*60)finalDate=now;
+ else if(pace>0){let date=nextDay(now,1);while(date&&date<=q.to){const vacation=h.vacationFrom&&h.vacationTo&&date>=h.vacationFrom&&date<=h.vacationTo;if(!vacation)forecastEnd+=pace;if(forecastEnd>=target*60){finalDate=date;break}date=nextDay(date,1)}}
+ const daysRem=Math.max(0,dayCount(nextDay(now,1),q.to)),vacLeft=h.vacationFrom&&h.vacationTo?Math.max(0,dayCount(h.vacationFrom>nextDay(now,1)?h.vacationFrom:nextDay(now,1),h.vacationTo<q.to?h.vacationTo:q.to)):0;
+ const available=Math.max(0,daysRem-vacLeft),required=available>0?Math.max(0,target*60-actual)/available:null;
+ // Buffer after the proposed vacation: forecast at today's realized pace, excluding chosen days.
+ let postBuffer=null;if(h.vacationFrom&&h.vacationTo&&h.vacationTo>=now){const finish=h.vacationTo>q.to?q.to:h.vacationTo;let projected=actual;for(let d=nextDay(now,1);d&&d<=finish;d=nextDay(d,1)){if(d<h.vacationFrom||d>h.vacationTo)projected+=pace}postBuffer=projected-target*60*dayCount(q.from,finish)/q.days}
+ return {buffer,days,finalDate,required,postBuffer,available};}
+function renderHealth(){const q=quarter(today()),h=hcLoad(),d=healthEstimate(h,q,today());
+ $('fin-h-quarter-label').textContent=q.key.replace('-',' · ')+' ('+prettyDate(q.from)+' – '+prettyDate(q.to)+') · Quý cũ giữ 7 ngày.';
+ const oldKey=(()=>{const d=parseDate(q.from);d.setDate(d.getDate()-1);return quarter(localISO(d)).key})();
+ const last=hcStore().quarters[oldKey],oldStatus=$('fin-h-old-quarter');oldStatus.hidden=!last;
+ if(last){oldStatus.textContent='Quý '+oldKey+': Amazon xác nhận '+(Number.isSafeInteger(last.confirmedMinutes)?fmtMinutes(last.confirmedMinutes):'Chưa nhập')+(last.asOf?' đến '+prettyDate(last.asOf):'')+' · Được giữ 7 ngày đầu quý mới.';}
+
+ if(!healthInputsDirty){$('fin-h-hours').value=d.confirmed===null?'':String(Math.floor(d.confirmed/60));$('fin-h-minutes').value=d.confirmed===null?'':String(d.confirmed%60);$('fin-h-date').value=h.asOf||'';}
+ if(!vacInputsDirty){$('fin-h-from').value=h.vacationFrom||'';$('fin-h-to').value=h.vacationTo||'';}
+ $('fin-h-confirmed').textContent=d.confirmed===null?'Chưa nhập':fmtMinutes(d.confirmed);$('fin-h-asof').textContent=h.asOf?'Đến '+prettyDate(h.asOf):'Cần cập nhật giờ Amazon';$('fin-h-estimated').textContent=d.estimated===null?'—':fmtMinutes(d.estimated);
+ for(const goal of [197,328]){const node=$('fin-h-goal'+goal);node.replaceChildren();const title=document.createElement('b');title.textContent='Mốc '+goal+'h';node.append(title);
+  if(d.estimated===null){const txt=document.createElement('div');txt.className='fin-status';txt.textContent='Nhập giờ Amazon để tính Buffer và EST.';node.append(txt);continue}
+  const stats=scheduleGoal(goal,d.estimated,q,h,today());const line=document.createElement('div');line.className='fin-label';line.textContent='Buffer hiện tại';node.append(line);
+  const val=document.createElement('strong');val.className=stats.buffer>=0?'fin-good':'fin-bad';val.textContent=(stats.buffer>=0?'+':'−')+fmtMinutes(Math.abs(stats.buffer));node.append(val);
+  const equivalent=document.createElement('div');equivalent.className='fin-mini';equivalent.textContent=(stats.buffer>=0?'DƯ ≈ ':'THIẾU ≈ ')+Math.abs(stats.days).toFixed(1)+' ngày lịch';node.append(equivalent);
+  if(stats.postBuffer!==null){const p=document.createElement('div');p.className='fin-mini';p.style.marginTop='7px';p.textContent='Sau kỳ nghỉ: '+(stats.postBuffer>=0?'+':'−')+fmtMinutes(Math.abs(stats.postBuffer));p.classList.add(stats.postBuffer>=0?'fin-good':'fin-bad');node.append(p)}
+  const est=document.createElement('div');est.className='fin-status';est.style.marginTop='10px';est.textContent='EST đạt mốc: '+(stats.finalDate?prettyDate(stats.finalDate):'Không kịp trong quý');node.append(est);
+  const need=document.createElement('div');need.className='fin-status';need.textContent='Cần bình quân: '+(stats.required===null?'Không còn ngày':fmtMinutes(stats.required)+'/ngày còn lại');node.append(need);
+ }
+}
+$('fin-h-save').onclick=()=>{const q=quarter(today()),hours=Number($('fin-h-hours').value),mins=Number($('fin-h-minutes').value),asOf=$('fin-h-date').value;
+ if($('fin-h-hours').value.trim()===''||$('fin-h-minutes').value.trim()===''||!Number.isSafeInteger(hours)||hours<0||hours>3000||!Number.isSafeInteger(mins)||mins<0||mins>59||!parseDate(asOf)||asOf<q.from||asOf>today()){$('fin-h-status').textContent='Vui lòng nhập tổng giờ/phút và ngày Amazon ghi nhận hợp lệ trong quý hiện tại.';return}
+ const obj=hcLoad();obj.confirmedMinutes=hours*60+mins;obj.asOf=asOf;hcSave(obj);healthInputsDirty=false;renderHealth();$('fin-h-status').textContent='Đã lưu giờ Amazon. Rolling vẫn được giữ nguyên.';
+};
+$('fin-h-rest-save').onclick=()=>{const q=quarter(today()),from=$('fin-h-from').value,to=$('fin-h-to').value;
+ if(!parseDate(from)||!parseDate(to)||from>to||from<=today()||to>q.to){$('fin-h-rest-status').textContent='Chọn From–To từ ngày mai đến ngày cuối quý, From không được sau To.';return}
+ const h=hcLoad();h.vacationFrom=from;h.vacationTo=to;hcSave(h);vacInputsDirty=false;renderHealth();$('fin-h-rest-status').textContent='Đã lưu kỳ nghỉ '+prettyDate(from)+' – '+prettyDate(to)+'. Chỉ ảnh hưởng dự báo Healthcare.';
+};
+$('fin-h-rest-clear').onclick=()=>{const h=hcLoad();h.vacationFrom='';h.vacationTo='';hcSave(h);vacInputsDirty=false;renderHealth();$('fin-h-rest-status').textContent='Đã xóa kỳ nghỉ dự kiến.'};
+for(const id of ['fin-h-hours','fin-h-minutes','fin-h-date'])$(id).addEventListener('input',()=>{healthInputsDirty=true});
+for(const id of ['fin-h-from','fin-h-to'])$(id).addEventListener('input',()=>{vacInputsDirty=true});
+const refresh=()=>{pruneExpired();renderIncome();renderHealth()};
+// Public export/import adapter reads only the isolated new stores.
+window.flexFinanceExport=()=>{pruneExpired();return {income:incomeLoad(),healthcare:hcStore()}};
+const checkHealthcare=h=>{if(!h||typeof h!=='object')throw Error('Dữ liệu Healthcare trong JSON không hợp lệ');
+ const quarters=h.quarters&&typeof h.quarters==='object'&&!Array.isArray(h.quarters)?h.quarters:h.quarter?{[h.quarter]:h}:{};
+ for(const [key,val] of Object.entries(quarters)){
+  if(!/^20\d{2}-Q[1-4]$/.test(key)||!val||typeof val!=='object'||(val.confirmedMinutes!==null&&val.confirmedMinutes!==undefined&&(!Number.isSafeInteger(val.confirmedMinutes)||val.confirmedMinutes<0||val.confirmedMinutes>180000))||
+    (val.asOf&&!parseDate(val.asOf))||((val.vacationFrom||val.vacationTo)&&(!parseDate(val.vacationFrom)||!parseDate(val.vacationTo)||val.vacationFrom>val.vacationTo)))throw Error('Dữ liệu Healthcare không hợp lệ tại '+key);
+ }
+};
+window.flexFinanceValidate=(p)=>{
+ if(p.income!==undefined){if(!p.income||typeof p.income!=='object'||!Array.isArray(p.income.records)||!Array.isArray(p.income.finalDays)||p.income.records.some(r=>!validIncome(r))||p.income.finalDays.some(d=>!parseDate(d)))throw Error('Dữ liệu thu nhập trong JSON không hợp lệ');}
+ if(p.healthcare!==undefined)checkHealthcare(p.healthcare);
+};
+window.flexFinanceImport=p=>{window.flexFinanceValidate(p);
+ if(p.income!==undefined)localStorage.setItem(MONEYKEY,JSON.stringify(p.income));
+ if(p.healthcare!==undefined)localStorage.setItem(HEALTHKEY,JSON.stringify(p.healthcare));
+ healthInputsDirty=false;vacInputsDirty=false;refresh();
+};
+// Render on reopen, date changes, manual edits, and uploads. Do not patch flexRefresh.
+window.addEventListener('focus',refresh);window.addEventListener('pageshow',refresh);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+$('day').addEventListener('change',()=>setTimeout(refresh,0));
+$('entries').addEventListener('change',()=>setTimeout(refresh,0));
+$('flex-save-blocks').addEventListener('click',()=>setTimeout(refresh,0));
+$('flex-zero').addEventListener('click',()=>setTimeout(refresh,0));
+setInterval(refresh,60000);refresh();
+})();
+</script>
+<!-- END isolated Income + Healthcare modules -->
+
 </body></html>
