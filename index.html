@@ -837,11 +837,24 @@ renderExtra();
 @media(max-width:370px){.fin-cols{gap:7px}.fin-tile{padding:9px}.fin-goal{padding:9px}.fin-goal strong{font-size:19px}}
 
 .fin-ref-row{background:#f6fafc;border:1px solid #dce8ef;border-radius:12px;padding:12px;margin:10px 0;min-width:0;overflow:hidden}.fin-ref-head{font-weight:700;font-size:13px}.fin-ref-row label{min-width:0}.fin-ocr-source{background:#fff;border:1px solid #d7e6ee;border-radius:10px;padding:9px;margin:9px 0}.fin-ocr-image{display:block;width:100%;height:auto;max-height:400px;object-fit:contain;margin:8px auto;border-radius:8px}.fin-ocr-raw{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;background:#f3f7f9;border-radius:8px;padding:9px}.fin-audit-check .fin-inputs>*{min-width:0}.fin-audit-check input{max-width:100%;min-width:0}
+/* Compact income review: leave Rolling and Healthcare CSS untouched. */
+#fin-income-reference-wrap,#fin-income-review-audit,.fin-ocr-diagnostics{display:none!important}
+.fin-day-breakdown{display:grid;gap:5px;margin-top:7px}
+.fin-day-breakdown .fin-line{padding:0!important;font-size:12px}
+.fin-day-breakdown b{font-size:14px}.fin-income-pending{color:#a06916!important}
+.fin-simple-day{padding:10px;border:1px solid #d9e7ef;border-radius:11px;margin:8px 0;background:#f8fbfd}
+.fin-simple-day>div:first-child{display:flex;justify-content:space-between;gap:6px;font-weight:750;font-size:13px}
+.fin-simple-day .fin-mini{line-height:1.6}
+#flex-income-card .fin-review-row>summary{font-size:13px!important;cursor:pointer;font-weight:700;line-height:1.55;overflow-wrap:anywhere}
+.fin-review-row.fin-pending{border-color:#edcf96;background:#fffaf1}
+.fin-review-row.fin-pending>summary{color:#835712}
+.fin-review-row>summary+.fin-inputs{margin-top:12px}
+.fin-status-select{display:block;max-width:100%;width:100%;font-size:16px}
 </style>
 <section class="card" id="flex-income-card"><details><summary>Thu nhập · Ngày / Tuần / Tháng / $ mỗi giờ</summary>
-<p class="note">Thu nhập gồm <b>Base + Tips, Earnings Adjustment, Additional Tips và Healthcare Subsidy đã trả</b>. Không cộng Instant Cash Out hay Payment sent. Ảnh <b>Tips pending</b> không được chốt tiền chuyến. Không thay đổi giờ Rolling.</p>
+<p class="note">Thu nhập gồm <b>Base + Tips, Earnings Adjustment, Additional Tips và Healthcare Subsidy đã trả</b>. Không cộng Instant Cash Out hay Payment sent. Ảnh <b>Tips pending</b> được lưu thành tiền tạm tính, không cộng vào thu nhập đã chốt. Không thay đổi giờ Rolling.</p>
 <div class="fin-cols">
-<div class="fin-tile"><small>Tiền ngày đang xem</small><strong id="fin-income-day">—</strong><div class="fin-mini" id="fin-income-day-split">Base / Tips: —</div></div>
+<div class="fin-tile"><small>Tiền ngày đang xem</small><strong id="fin-income-day">—</strong><div id="fin-income-day-breakdown" class="fin-day-breakdown"><div class="fin-line"><span>Đã chốt</span><b id="fin-day-paid">$0.00</b></div><div class="fin-line"><span>Chờ Tips</span><b id="fin-day-pending" class="fin-income-pending">$0.00</b></div><div class="fin-line"><span>Tổng tạm tính</span><b id="fin-day-estimate">$0.00</b></div></div><div class="fin-mini" id="fin-income-day-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tuần (T2–CN)</small><strong id="fin-income-week">—</strong><div class="fin-mini" id="fin-income-week-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tháng hiện tại</small><strong id="fin-income-month">—</strong></div>
 <div class="fin-tile"><small>Base / Tips (tháng)</small><strong id="fin-income-split">—</strong></div><div class="fin-tile"><small>Adjustment / Tips thêm / Healthcare (tháng)</small><strong id="fin-income-specials">—</strong></div>
@@ -849,7 +862,7 @@ renderExtra();
 <div class="fin-tile"><small>Ngày đã chạy chưa chốt tiền (trong tuần)</small><strong id="fin-income-unfinished">—</strong></div>
 </div>
 <details class="flex-panel" id="fin-income-integrity-wrap" hidden><summary id="fin-income-integrity-title">⚠️ Cần kiểm tra chuyến đã lưu</summary><div class="fin-status" id="fin-income-integrity-body"></div></details>
-<div class="fin-actions"><button id="fin-income-upload" type="button">📷 Upload Earnings đủ tips</button><button id="fin-income-add" class="secondary" type="button">＋ Nhập chuyến</button><button id="fin-income-add-special" class="secondary" type="button">＋ Nhập khoản cộng thêm</button></div>
+<div class="fin-actions"><button id="fin-income-upload" type="button">📷 Upload Earnings</button><button id="fin-income-add" class="secondary" type="button">＋ Nhập chuyến</button><button id="fin-income-add-special" class="secondary" type="button">＋ Nhập khoản cộng thêm</button></div>
 <div id="fin-income-source" hidden class="flex-panel" style="margin:10px 0">
 <b>Chọn nơi lấy ảnh Earnings</b>
 <div class="fin-actions"><button type="button" class="secondary" id="fin-income-source-photos">🖼️ Ảnh / Google Photos</button><button type="button" id="fin-income-source-files">📁 My Files / Screenshots</button></div>
@@ -857,8 +870,8 @@ renderExtra();
 <input type="file" id="fin-income-images" accept="image/*" multiple hidden>
 <div class="fin-status" id="fin-income-status">Chưa chọn ảnh. Có thể upload nhiều ảnh của các ngày đã qua trong cùng một lần.</div>
 <div id="fin-income-review" hidden>
-<h3 style="margin:12px 0">Kiểm tra tiền trước khi lưu</h3>
-<div class="fin-status">Kiểm tra từng chuyến và tiền theo ngày trước khi lưu. Ảnh trùng chính xác sẽ gộp một lần; nếu trùng giờ nhưng khác tiền, ứng dụng giữ cả hai để bạn chọn. Phần đối chiếu sẽ cảnh báo thiếu giờ so với Rolling và không tự chốt ngày thiếu. Nếu OCR bỏ sót chuyến, chọn ＋ Thêm ảnh / ＋ Thêm chuyến. Không tính Cash Out / Payment sent. Tips pending chưa chốt.</div>
+<h3 style="margin:12px 0">Xem trước Earnings</h3>
+<div class="fin-status">Các ảnh trùng được kiểm tra tự động. Chuyến <b>Chờ Tips</b> lưu tạm và sẽ được thay bằng tiền <b>Paid</b> khi bạn upload ảnh ngày hôm sau. Chạm một dòng để chỉnh; mở ảnh gốc nếu cần.</div><div id="fin-income-simple-days"></div>
 <div id="fin-income-review-list"></div>
 <div class="fin-actions"><button type="button" id="fin-income-more" class="secondary">＋ Thêm ảnh</button><button type="button" id="fin-income-more-manual" class="secondary">＋ Thêm chuyến</button><button type="button" id="fin-income-more-special" class="secondary">＋ Thêm khoản khác</button></div>
 <div id="fin-income-review-summary" class="fin-review-count"></div>
@@ -871,7 +884,7 @@ renderExtra();
 <details class="flex-panel" id="fin-income-images-preview" hidden><summary>🖼️ Xem lại ảnh đã upload và phần OCR đọc được</summary><div id="fin-income-image-list"></div></details>
 <div id="fin-income-review-audit" class="fin-status" aria-live="polite"></div>
 <details class="fin-ocr-diagnostics"><summary>Kiểm tra OCR từng ảnh / cảnh báo</summary><div id="fin-income-ocr-warnings" class="fin-status"></div></details>
-<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55"><input type="checkbox" id="fin-income-confirm" style="width:20px;height:20px;flex:none;margin-top:2px"> Tôi đã kiểm tra: các chuyến đã có đủ Base + Tips và đủ số chuyến trong những ngày cần chốt. Khoản cộng thêm không tự chốt ngày chạy.</label>
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.55"><input type="checkbox" id="fin-income-confirm" style="width:20px;height:20px;flex:none;margin-top:2px"> Tôi đã xem danh sách giao dịch nhận diện; khoản Chờ Tips chỉ tính tạm.</label>
 <div class="fin-actions"><button id="fin-income-save" type="button">Lưu thu nhập đã kiểm tra</button><button id="fin-income-cancel" type="button" class="secondary">Đóng</button></div>
 </div>
 <div class="flex-panel" id="fin-income-retention"><div class="fin-line"><b id="fin-income-current-month">Tháng hiện tại</b><span id="fin-income-retention-label">—</span></div><div class="fin-status" id="fin-income-retention-status">Giữ tháng trước thêm 7 ngày; sau đó chỉ dọn khi đủ Tips.</div></div>
@@ -879,11 +892,11 @@ renderExtra();
 <p class="fin-status">Đối với khoản không có giờ chạy, ứng dụng chống trùng bằng loại + ngày + số tiền; nếu Amazon có hai khoản giống hệt nhau, hãy kiểm tra lại vì không có mã giao dịch để phân biệt tuyệt đối.</p>
 <details class="flex-panel fin-delete-tools" id="fin-income-delete-tools"><summary>Quản lý / Xóa dữ liệu Thu nhập</summary>
 <p class="fin-delete-note">Có thể xóa toàn bộ tiền để upload lại ảnh. Chỉ xóa dữ liệu <b>Thu nhập</b>, không ảnh hưởng <b>giờ Rolling</b> hoặc <b>Healthcare Subsidy</b>. Nên xuất Backup JSON trước khi xóa.</p>
-<div class="fin-actions"><button id="fin-income-delete-all" class="danger" type="button">🗑️ Xóa toàn bộ thu nhập đã lưu</button><button id="fin-income-undo" class="secondary" type="button" hidden>↶ Hoàn tác lần xóa vừa rồi</button></div>
+<div class="fin-actions"><button id="fin-income-delete-selected" class="secondary" type="button">Xóa tiền ngày đang xem</button><button id="fin-income-delete-all" class="danger" type="button">🗑️ Xóa toàn bộ thu nhập đã lưu</button><button id="fin-income-undo" class="secondary" type="button" hidden>↶ Hoàn tác lần xóa vừa rồi</button></div>
 <div class="fin-status" id="fin-income-delete-status" role="status" aria-live="polite"></div>
 </details>
 <details class="flex-panel"><summary>Chi tiết tiền đã lưu</summary>
-<p class="fin-status">Mở mục “Quản lý / Xóa” ở từng ngày để xóa riêng ngày, chuyến hoặc khoản cộng thêm. Sau đó upload ảnh Earnings lại.</p>
+<p class="fin-status">Nếu một ngày OCR thiếu chuyến, hãy xóa <b>chỉ ngày đó</b> rồi upload lại; dữ liệu các ngày khác được giữ. Bạn cũng có thể xóa đúng một chuyến hoặc xóa toàn bộ thu nhập.</p>
 <div id="fin-income-history"></div></details>
 </details></section>
 <section class="card" id="flex-health-card"><details><summary>Healthcare Subsidy · Buffer / EST</summary><p class="note" id="fin-h-quarter-label">Chỉ theo dõi quý hiện tại; quý trước giữ thêm 7 ngày.</p><div id="fin-h-old-quarter" class="fin-status" hidden></div>
@@ -915,7 +928,7 @@ const fmtMoney=c=>'$'+(Math.round(c)/100).toLocaleString('en-US',{minimumFractio
 const prettyDate=s=>s?`${s.slice(8)}/${s.slice(5,7)}/${s.slice(0,4)}`:'—';
 const rolling=()=>read(ROLLINGKEY,{});
 const validMoney=r=>r&&parseDate(r.date)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.start||'')&&/^([01]\d|2[0-3]):[0-5]\d$/.test(r.end||'')&&r.end>r.start&&Number.isSafeInteger(r.cents)&&r.cents>=0&&r.cents<=100000000;
-const incomeLoad=()=>{const o=read(MONEYKEY,{version:2,records:[],finalDays:[],specials:[]});return o&&Array.isArray(o.records)&&Array.isArray(o.finalDays)?{...o,specials:Array.isArray(o.specials)?o.specials:[]}: {version:2,records:[],finalDays:[],specials:[]}};
+const incomeLoad=()=>{const o=read(MONEYKEY,{version:3,records:[],finalDays:[],specials:[],pendingRecords:[]});return o&&Array.isArray(o.records)&&Array.isArray(o.finalDays)?{...o,specials:Array.isArray(o.specials)?o.specials:[],pendingRecords:Array.isArray(o.pendingRecords)?o.pendingRecords:[]}: {version:3,records:[],finalDays:[],specials:[],pendingRecords:[]}};
 const specialLabels={adjustment:'Earnings Adjustment',extra_tips:'Additional Tips',health_subsidy:'Healthcare Subsidy'};
 const specialKey=r=>r.date+'|'+r.specialType+'|'+r.cents;
 const validSpecial=r=>!!(r&&parseDate(r.date)&&Object.hasOwn(specialLabels,r.specialType)&&Number.isSafeInteger(r.cents)&&r.cents>0&&r.cents<=100000000);
@@ -924,15 +937,15 @@ const ym=d=>d.slice(0,7);
 const monthLabel=k=>k&&/^\d{4}-\d{2}$/.test(k)?k.slice(5)+'/'+k.slice(0,4):'—';
 const monthAfter=k=>{const d=parseDate(k+'-01');if(!d)return null;d.setMonth(d.getMonth()+1);return localISO(d).slice(0,7)};
 const monthPurgeDate=k=>{const next=monthAfter(k);return next?next+'-08':null};
-const incomeMonths=data=>[...new Set([...allIncomeRecords(data).map(r=>ym(r.date)),...data.finalDays.map(ym)])].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
-const incompleteMonth=(k,data,entries)=>Object.entries(entries).filter(([date,v])=>ym(date)===k&&Number(v?.a)>0&&!data.finalDays.includes(date)).map(([date])=>date).sort();
+const incomeMonths=data=>[...new Set([...allIncomeRecords(data),...data.pendingRecords].map(r=>ym(r.date)).concat(data.finalDays.map(ym)))].filter(m=>/^\d{4}-(0[1-9]|1[0-2])$/.test(m)).sort();
+const incompleteMonth=(k,data,entries)=>[...new Set([...Object.entries(entries).filter(([date,v])=>ym(date)===k&&Number(v?.a)>0&&!data.finalDays.includes(date)).map(([date])=>date),...data.pendingRecords.filter(r=>ym(r.date)===k).map(r=>r.date)])].sort();
 function pruneIncome(){const data=incomeLoad(),current=ym(today()),entries=rolling();const months=incomeMonths(data);let expired=[];
  for(const m of months){if(m>=current||today()<(monthPurgeDate(m)||'9999-12-31'))continue;
   // Amazon does not expose a final-Tips flag: completed workdays not confirmed via Earnings block deletion.
   if(incompleteMonth(m,data,entries).length===0)expired.push(m);
  }
- if(expired.length){const old=data.records.length+data.finalDays.length+data.specials.length;data.records=data.records.filter(r=>!expired.includes(ym(r.date)));data.specials=data.specials.filter(r=>!expired.includes(ym(r.date)));data.finalDays=data.finalDays.filter(d=>!expired.includes(ym(d)));
-  if(old!==data.records.length+data.finalDays.length+data.specials.length)localStorage.setItem(MONEYKEY,JSON.stringify(data));
+ if(expired.length){const old=data.records.length+data.finalDays.length+data.specials.length+data.pendingRecords.length;data.records=data.records.filter(r=>!expired.includes(ym(r.date)));data.specials=data.specials.filter(r=>!expired.includes(ym(r.date)));data.pendingRecords=data.pendingRecords.filter(r=>!expired.includes(ym(r.date)));data.finalDays=data.finalDays.filter(d=>!expired.includes(ym(d)));
+  if(old!==data.records.length+data.finalDays.length+data.specials.length+data.pendingRecords.length)localStorage.setItem(MONEYKEY,JSON.stringify(data));
  }
  return data;}
 
@@ -1038,26 +1051,27 @@ function updateIncomeReferenceStatus(){const problems=referenceProblems(review),
 let incomeDeleteUndo=null;
 function resetIncomeDeleteUndo(){incomeDeleteUndo=null;$('fin-income-undo').hidden=true}
 function deleteSavedIncome(mode, date='', identity=''){
- const data=incomeLoad(),beforeCount=data.records.length+data.specials.length+data.finalDays.length;
+ const data=incomeLoad(),beforeCount=data.records.length+data.specials.length+data.finalDays.length+data.pendingRecords.length;
  let label='';
  if(mode==='all'){
   if(!beforeCount){$('fin-income-delete-status').textContent='Chưa có thu nhập nào để xóa.';return}
-  label='XÓA TOÀN BỘ '+data.records.length+' chuyến, '+data.specials.length+' khoản cộng thêm và '+data.finalDays.length+' ngày chốt tiền';
+  label='XÓA TOÀN BỘ '+data.records.length+' chuyến Paid, '+data.pendingRecords.length+' chuyến chờ Tips, '+data.specials.length+' khoản cộng thêm và '+data.finalDays.length+' ngày chốt tiền';
  }else if(mode==='day'){
   if(!parseDate(date))return;
-  if(!data.records.some(r=>r.date===date)&&!data.specials.some(r=>r.date===date)&&!data.finalDays.includes(date))return;
+  if(!data.records.some(r=>r.date===date)&&!data.pendingRecords.some(r=>r.date===date)&&!data.specials.some(r=>r.date===date)&&!data.finalDays.includes(date))return;
   label='XÓA TOÀN BỘ THU NHẬP ngày '+prettyDate(date)+' (chuyến, khoản cộng thêm và trạng thái chốt tiền)';
  }else if(mode==='entry'){
-  const match=[...data.records,...data.specials].find(r=>(r.specialType?'s|'+specialKey(r):'d|'+recordKey(r))===identity);
+  const match=[...data.records,...data.pendingRecords,...data.specials].find(r=>(r.specialType?'s|'+specialKey(r):'d|'+recordKey(r))===identity);
   if(!match)return;
   label='XÓA '+(match.specialType?(specialLabels[match.specialType]||'khoản cộng thêm'):'chuyến '+match.start+'–'+match.end)+' '+prettyDate(match.date)+' · '+fmtMoney(match.cents);
  }else return;
  if(!confirm(label+'?\n\nChỉ xóa dữ liệu THU NHẬP, không thay đổi giờ Rolling hoặc giờ Healthcare. Hãy xuất Backup JSON trước nếu cần lưu lại.'))return;
  incomeDeleteUndo=JSON.stringify(data);
  if(mode==='all'){
-  data.records=[];data.specials=[];data.finalDays=[];
+  data.records=[];data.pendingRecords=[];data.specials=[];data.finalDays=[];
  }else if(mode==='day'){
   data.records=data.records.filter(r=>r.date!==date);
+  data.pendingRecords=data.pendingRecords.filter(r=>r.date!==date);
   data.specials=data.specials.filter(r=>r.date!==date);
   data.finalDays=data.finalDays.filter(d=>d!==date);
  }else{
@@ -1065,6 +1079,7 @@ function deleteSavedIncome(mode, date='', identity=''){
   if(isSpecial)data.specials=data.specials.filter(r=>specialKey(r)!==key);
   else{
    data.records=data.records.filter(r=>recordKey(r)!==key);
+   data.pendingRecords=data.pendingRecords.filter(r=>recordKey(r)!==key);
    // The workday must be verified again after a paid delivery was removed.
    data.finalDays=data.finalDays.filter(d=>d!==date);
   }
@@ -1079,7 +1094,7 @@ function deleteSavedIncome(mode, date='', identity=''){
  $('fin-income-delete-status').textContent=(mode==='all'?'Đã xóa toàn bộ thu nhập.':mode==='day'?'Đã xóa thu nhập ngày '+prettyDate(date)+'.':'Đã xóa khoản đã chọn.')+' Có thể upload lại ảnh. Nhấn “Hoàn tác” nếu xóa nhầm (trước khi tải lại trang).';
  $('fin-income-status').textContent='Dữ liệu giờ Rolling và Healthcare được giữ nguyên.';
 }
-$('fin-income-delete-all').onclick=()=>deleteSavedIncome('all');
+$('fin-income-delete-all').onclick=()=>deleteSavedIncome('all');$('fin-income-delete-selected').onclick=()=>{const selected=parseDate($('day')?.value)?$('day').value:today();deleteSavedIncome('day',selected)};
 $('fin-income-undo').onclick=()=>{
  if(!incomeDeleteUndo){$('fin-income-delete-status').textContent='Không còn bản xóa nào để hoàn tác.';return}
  if(!confirm('Khôi phục lại dữ liệu Thu nhập ngay trước lần xóa gần nhất?'))return;
@@ -1089,8 +1104,8 @@ $('fin-income-undo').onclick=()=>{
 
 function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.value)?$('day').value:today(),weekStart=monday(selected),weekEnd=nextDay(weekStart,6),entries=rolling(),current=ym(today());
  const sum=arr=>arr.reduce((n,r)=>n+r.cents,0),all=allIncomeRecords(data),day=all.filter(r=>r.date===selected),week=all.filter(r=>r.date>=weekStart&&r.date<=weekEnd),month=all.filter(r=>ym(r.date)===current);
- const weekFin=data.finalDays.filter(d=>d>=weekStart&&d<=weekEnd),mins=weekFin.reduce((n,d)=>n+(Number(entries[d]?.a)||0),0);
- const missing=Object.keys(entries).filter(d=>d>=weekStart&&d<=weekEnd&&(Number(entries[d]?.a)||0)>0&&!data.finalDays.includes(d)).length;
+ const weekFin=data.finalDays.filter(d=>d>=weekStart&&d<=weekEnd&&!data.pendingRecords.some(r=>r.date===d)),mins=weekFin.reduce((n,d)=>n+(Number(entries[d]?.a)||0),0);
+ const missing=Object.keys(entries).filter(d=>d>=weekStart&&d<=weekEnd&&(Number(entries[d]?.a)||0)>0&&(!data.finalDays.includes(d)||data.pendingRecords.some(r=>r.date===d))).length;
  // Warn on already-finalized days too: re-uploading OCR must never leave a
  // misleading "fully paid" label if the saved trips are shorter than Rolling.
  const audit=Object.keys(entries).filter(d=>ym(d)===current&&(Number(entries[d]?.a)||0)>0&&data.finalDays.includes(d)).map(d=>{
@@ -1105,7 +1120,11 @@ function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.val
   $('fin-income-integrity-body').style.whiteSpace='pre-line';
  }
  const split=arr=>{const deliveries=arr.filter(r=>!r.specialType),b=deliveries.filter(r=>Number.isSafeInteger(r.baseCents)).reduce((a,r)=>a+r.baseCents,0),t=deliveries.filter(r=>Number.isSafeInteger(r.tipsCents)).reduce((a,r)=>a+r.tipsCents,0),partial=deliveries.some(r=>!Number.isSafeInteger(r.baseCents)||!Number.isSafeInteger(r.tipsCents));return !deliveries.length?'—':(fmtMoney(b)+' / '+fmtMoney(t))+(partial?' *':'')};
- $('fin-income-day').textContent=(data.finalDays.includes(selected)||day.some(r=>r.specialType))?fmtMoney(sum(day)):'Chưa chốt';
+ const waiting=data.pendingRecords.filter(r=>r.date===selected),waitingCents=sum(waiting),confirmedCents=sum(day);
+ $('fin-income-day').textContent=waiting.length?'Chờ Tips':day.length?fmtMoney(confirmedCents):'Chưa có Earnings';
+ $('fin-day-paid').textContent=fmtMoney(confirmedCents);
+ $('fin-day-pending').textContent=fmtMoney(waitingCents)+(waiting.length?' · '+waiting.length+' chuyến':'');
+ $('fin-day-estimate').textContent=fmtMoney(confirmedCents+waitingCents);
  $('fin-income-week').textContent=week.length?fmtMoney(sum(week)):'—';
  $('fin-income-day-split').textContent='Base / Tips: '+split(day);
  $('fin-income-week-split').textContent='Base / Tips: '+split(week);
@@ -1126,16 +1145,16 @@ function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.val
   $('fin-income-prior').textContent='Tổng tiền đã lưu: '+fmtMoney(sum(priorRecords))+' · Base / Tips: '+split(priorRecords);
  }
  const div=$('fin-income-history');div.replaceChildren();const groups={};
- for(const r of all){(groups[r.date]??=[]).push(r)}
+ for(const r of [...all,...data.pendingRecords.map(r=>({...r,pending:true}))]){(groups[r.date]??=[]).push(r)}
  for(const day of data.finalDays){if(!groups[day])groups[day]=[]}
  const dates=Object.keys(groups).sort().reverse();for(const date of dates){const rows=groups[date];const box=document.createElement('div');box.className='fin-history-day';const sumDay=sum(rows);
-  const heading=document.createElement('div');heading.className='fin-line';const title=document.createElement('b');title.textContent=prettyDate(date);const amount=document.createElement('b');amount.textContent=fmtMoney(sumDay);heading.append(title,amount);box.append(heading);
-  const caption=document.createElement('div');caption.className='fin-mini';caption.textContent=rows.filter(r=>!r.specialType).length+' chuyến · '+rows.filter(r=>r.specialType).map(r=>(specialLabels[r.specialType]||'Khác')+': '+fmtMoney(r.cents)).join(' · ')+' · Base / Tips: '+split(rows);box.append(caption);
+  const heading=document.createElement('div');heading.className='fin-line';const title=document.createElement('b');title.textContent=prettyDate(date);const amount=document.createElement('b');amount.textContent=fmtMoney(sumDay-rows.filter(r=>r.pending).reduce((n,r)=>n+r.cents,0));heading.append(title,amount);box.append(heading);
+  const caption=document.createElement('div');caption.className='fin-mini';caption.textContent=rows.filter(r=>!r.specialType&&!r.pending).length+' chuyến Paid'+(rows.some(r=>r.pending)?' · Chờ Tips: '+fmtMoney(rows.filter(r=>r.pending).reduce((n,r)=>n+r.cents,0)):'')+' · '+rows.filter(r=>r.specialType).map(r=>(specialLabels[r.specialType]||'Khác')+': '+fmtMoney(r.cents)).join(' · ')+' · Base / Tips: '+split(rows);box.append(caption);
   const manage=document.createElement('details');manage.className='fin-history-manage';
   const summary=document.createElement('summary');summary.textContent='Quản lý / Xóa ngày hoặc từng khoản';manage.append(summary);
   for(const r of [...rows].sort((a,b)=>(a.start||'').localeCompare(b.start||''))){
    const line=document.createElement('div');line.className='fin-delete-entry';
-   const txt=document.createElement('span');txt.textContent=(r.specialType?(specialLabels[r.specialType]||'Khoản cộng thêm'):(r.start+'–'+r.end))+' · '+fmtMoney(r.cents);
+   const txt=document.createElement('span');txt.textContent=(r.specialType?(specialLabels[r.specialType]||'Khoản cộng thêm'):(r.start+'–'+r.end+(r.pending?' · Chờ Tips':'')))+' · '+fmtMoney(r.cents);
    const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Xóa';del.setAttribute('aria-label','Xóa '+txt.textContent+' ngày '+prettyDate(date));
    const identity=r.specialType?'s|'+specialKey(r):'d|'+recordKey(r);
    del.onclick=()=>deleteSavedIncome('entry',date,identity);line.append(txt,del);manage.append(line);
@@ -1147,7 +1166,7 @@ function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.val
 }
 function setupReviewRow(item){const r={...item};review.push(r);updateReview()}
 function updateReview(){const root=$('fin-income-review-list');root.replaceChildren();let idx=0;
- for(const r of review){const id=idx++;const outer=document.createElement('div');outer.className='fin-review-row '+(r.kind==='special'?'fin-review-special':'fin-review-trip');
+ for(const r of review){const id=idx++;const outer=document.createElement('details');outer.className='fin-review-row '+(r.kind==='special'?'fin-review-special':'fin-review-trip')+(r.pending?' fin-pending':'');const headline=document.createElement('summary');const headingText=()=>r.kind==='special'?(prettyDate(r.date)+' · '+(specialLabels[r.specialType]||'Khoản khác')+' · '+fmtMoney(r.cents||0)):(prettyDate(r.date)+' · '+(r.start||'--:--')+'–'+(r.end||'--:--')+' · '+fmtMoney(r.cents||0)+' · '+(r.pending?'Chờ Tips':'Paid'));headline.textContent=headingText();outer.append(headline);if(!validReview(r))outer.open=true;
   if(r.kind==='special'){
    const marker=document.createElement('b');marker.textContent='Khoản cộng thêm · Không có giờ chạy';outer.append(marker);
    const grid=document.createElement('div');grid.className='fin-inputs';
@@ -1155,43 +1174,35 @@ function updateReview(){const root=$('fin-income-review-list');root.replaceChild
    for(const [label,type,key] of fields){const wrap=document.createElement('div'),l=document.createElement('label');l.textContent=label;let input;
     if(type==='select'){input=document.createElement('select');for(const [value,name] of Object.entries(specialLabels)){const o=document.createElement('option');o.value=value;o.textContent=name;input.append(o)}input.value=r.specialType||'adjustment';}
     else{input=document.createElement('input');input.type=type;if(type==='number'){input.step='0.01';input.min='0.01'}input.value=key==='amount'?(r.cents===null?'':(r.cents/100).toFixed(2)):r[key]||''}
-    input.addEventListener('input',()=>{if(key==='amount'){const n=Number(input.value);r.cents=input.value.trim()!==''&&Number.isFinite(n)&&n>0&&n<=1000000?Math.round(n*100):null}else r[key]=input.value;updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
+    input.addEventListener('input',()=>{if(key==='amount'){const n=Number(input.value);r.cents=input.value.trim()!==''&&Number.isFinite(n)&&n>0&&n<=1000000?Math.round(n*100):null}else r[key]=input.value;headline.textContent=headingText();updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
    const controls=document.createElement('div');controls.className='fin-actions';const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Bỏ khoản';del.onclick=()=>{review=review.filter(x=>x!==r);updateReview()};controls.append(del);outer.append(grid,controls);root.append(outer);continue;
   }
   const fields=[['Ngày','date','date'],['Bắt đầu','time','start'],['Kết thúc','time','end'],['Tiền tổng ($)','number','amount'],['Base ($) · nếu biết','number','base'],['Tips ($) · nếu biết','number','tips']];const grid=document.createElement('div');grid.className='fin-inputs';
   for(const [label,type,key] of fields){const wrap=document.createElement('div'),l=document.createElement('label'),input=document.createElement('input');l.textContent=label;input.type=type;input.step=type==='number'?'0.01':'any';input.min=type==='number'?'0':undefined;input.value=key==='amount'?(r.cents===null?'':(r.cents/100).toFixed(2)):(key==='base'||key==='tips')?(Number.isSafeInteger(r[key+'Cents'])?(r[key+'Cents']/100).toFixed(2):''):r[key]||'';
-   input.addEventListener('input',()=>{if(key==='amount'||key==='base'||key==='tips'){const n=Number(input.value),c=input.value.trim()!==''&&Number.isFinite(n)&&n>=0&&n<=1000000?Math.round(n*100):null;if(key==='amount')r.cents=c;else r[key+'Cents']=c}else r[key]=input.value;updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
-  const controls=document.createElement('div');controls.className='fin-actions';const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Bỏ chuyến';del.onclick=()=>{review=review.filter(x=>x!==r);updateReview()};controls.append(del);
+   input.addEventListener('input',()=>{if(key==='amount'||key==='base'||key==='tips'){const n=Number(input.value),c=input.value.trim()!==''&&Number.isFinite(n)&&n>=0&&n<=1000000?Math.round(n*100):null;if(key==='amount')r.cents=c;else r[key+'Cents']=c}else r[key]=input.value;headline.textContent=headingText();updateReviewSummary()});l.append(input);wrap.append(l);grid.append(wrap)}
+  const controls=document.createElement('div');controls.className='fin-actions';const status=document.createElement('label');status.textContent='Trạng thái trên Amazon';const selector=document.createElement('select');selector.className='fin-status-select';for(const [value,label] of [['paid','Paid · Đã chốt'],['pending','Tips pending · Tạm tính']]){const option=document.createElement('option');option.value=value;option.textContent=label;selector.append(option)}selector.value=r.pending?'pending':'paid';selector.onchange=()=>{r.pending=selector.value==='pending';headline.textContent=headingText();outer.classList.toggle('fin-pending',r.pending);updateReviewSummary()};status.append(selector);controls.append(status);const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Bỏ chuyến';del.onclick=()=>{review=review.filter(x=>x!==r);updateReview()};controls.append(del);
   outer.append(grid,controls);root.append(outer);
  }
  updateReviewSummary();renderIncomeReferences();$('fin-income-review').hidden=false;
 }
 function updateReviewSummary(){
- const good=review.filter(validReview),dates=[...new Set(good.map(r=>r.date))],gaps=incomeReviewCompleteness(good);
- const cash=good.reduce((sum,r)=>sum+r.cents,0),invalid=review.length-good.length;
- $('fin-income-review-summary').textContent=`${good.filter(r=>r.kind!=='special').length} chuyến + ${good.filter(r=>r.kind==='special').length} khoản khác · ${dates.length} ngày · ${fmtMoney(cash)}${invalid?' · '+invalid+' mục cần sửa':''}${dupReview?' · '+dupReview+' bản OCR trùng đã gộp':''}${blockedPending?' · '+blockedPending+' lần gặp Tips pending':''}`;
- const old=incomeLoad(),entries=rolling(),byDay={};
- for(const r of good){const x=byDay[r.date]??={rows:[],deliveries:0};x.rows.push(r);if(r.kind!=='special')x.deliveries++}
- const compare=Object.keys(byDay).sort().map(d=>{const x=byDay[d],previous=old.records.filter(r=>r.date===d),prevKeys=new Set(previous.map(recordKey));
-  const newKeys=new Set(x.rows.filter(r=>r.kind!=='special').map(recordKey));
-  const union=new Set([...prevKeys,...newKeys]);const newAmount=x.rows.reduce((n,r)=>n+r.cents,0);
-  const seen=incomePendingDates.has(d)?' · ⚠️ Tips pending': '';
-  const rollingMins=Number(entries[d]?.a)||0;
-  const durationMins=x.rows.filter(r=>r.kind!=='special').reduce((n,r)=>n+duration(r.start,r.end),0);
-  const potentialGap=rollingMins>0&&durationMins>0&&durationMins+20<rollingMins?' · ⚠️ Giờ chuyến trong ảnh ít hơn Completed':'',
-  unchanged=union.size===prevKeys.size?' · không có chuyến mới':'',extra=old.specials.filter(r=>r.date===d&&!x.rows.some(a=>a.kind==='special'&&specialKey(a)===specialKey(r))).reduce((n,r)=>n+r.cents,0);
-  return `${prettyDate(d)}: OCR ${x.deliveries} chuyến / ${fmtMoney(newAmount)}; đã lưu ${previous.length} chuyến; sau gộp ${union.size} chuyến${extra?' + '+fmtMoney(extra)+' khoản khác đã lưu':''}${unchanged}${seen}${potentialGap}`;
- });
- const problems=incomeOCRIssues.length;
- $('fin-income-review-audit').textContent=(gaps.some(g=>g.incomplete)?'⚠️ PHÁT HIỆN CÓ THỂ THIẾU CHUYẾN. Các ngày thiếu sẽ KHÔNG được tự chốt tiền.\n':'')+
-  (compare.length?'ĐỐI CHIẾU THEO NGÀY (giữ chuyến cũ):\n'+compare.join('\n'):'Chưa có mục OCR hợp lệ.')+
-  (gaps.length?'\nĐỐI CHIẾU GIỜ VỚI ROLLING:\n'+gaps.map(g=>prettyDate(g.date)+': '+g.count+' chuyến, Earnings '+fmtMinutes(g.minutes)+(g.expected?' / Rolling '+fmtMinutes(g.expected)+(g.incomplete?' => THIẾU ÍT NHẤT '+fmtMinutes(g.missing)+', cần thêm/kiểm tra chuyến':''):' / chưa có giờ Rolling để đối chiếu')).join('\n'):'')+
-  (problems?'\n⚠️ '+problems+' cảnh báo OCR; mở phần Kiểm tra OCR từng ảnh.':'');
- $('fin-income-review-audit').style.border=gaps.some(g=>g.incomplete)?'2px solid #c47a23':'';
- $('fin-income-review-audit').style.background=gaps.some(g=>g.incomplete)?'#fff5e9':'#f3f8fb';
- $('fin-income-ocr-warnings').textContent=incomeOCRDayNotes.join('\n')+(problems?'\n'+incomeOCRIssues.slice(0,40).join('\n'):'')||'Chưa có cảnh báo.';
- updateIncomeReferenceStatus();
- // Confirmation stays unchecked when new images are parsed; editable input alone should not clear a previously checked box.
+ const good=review.filter(validReview),invalid=review.length-good.length,paid=good.filter(r=>r.kind!=='special'&&!r.pending),pending=good.filter(r=>r.kind!=='special'&&r.pending),specials=good.filter(r=>r.kind==='special');
+ const old=incomeLoad(),allDays=[...new Set(good.map(r=>r.date))].sort();
+ $('fin-income-review-summary').textContent=`${paid.length} Paid · ${pending.length} chờ Tips · ${specials.length} khoản cộng thêm${invalid?' · '+invalid+' dòng cần sửa':''}${dupReview?' · '+dupReview+' dòng ảnh trùng':''}`;
+ const list=$('fin-income-simple-days');list.replaceChildren();
+ for(const date of allDays){const d=paid.filter(r=>r.date===date),p=pending.filter(r=>r.date===date),sp=specials.filter(r=>r.date===date),oldPaid=old.records.filter(r=>r.date===date);
+  const paidMap=new Map(oldPaid.map(r=>[recordKey(r),r]));for(const r of d)paidMap.set(recordKey(r),r);
+  const pendingMap=new Map(old.pendingRecords.filter(r=>r.date===date).map(r=>[recordKey(r),r]));for(const r of p){if(!paidMap.has(recordKey(r)))pendingMap.set(recordKey(r),r)}for(const key of paidMap.keys())pendingMap.delete(key);
+  const extras=new Map(old.specials.filter(r=>r.date===date).map(r=>[specialKey(r),r]));for(const r of sp)extras.set(specialKey(r),r);
+  const saved=[...paidMap.values(),...extras.values()].reduce((n,r)=>n+r.cents,0),waiting=[...pendingMap.values()].reduce((n,r)=>n+r.cents,0);
+  const container=document.createElement('div');container.className='fin-simple-day';const head=document.createElement('div');const label=document.createElement('span');label.textContent=prettyDate(date);const amount=document.createElement('b');amount.textContent=fmtMoney(saved+waiting);head.append(label,amount);container.append(head);
+  const info=document.createElement('div');info.className='fin-mini';info.textContent=`${paidMap.size} chuyến Paid · ${fmtMoney(saved)} đã chốt${pendingMap.size?' · '+pendingMap.size+' chờ Tips ('+fmtMoney(waiting)+')':''}`;container.append(info);
+  const expected=Number(rolling()[date]?.a)||0,minutes=[...paidMap.values(),...pendingMap.values()].reduce((n,r)=>n+duration(r.start,r.end),0);
+  if(expected>0&&minutes+12<expected){const warn=document.createElement('div');warn.className='fin-mini fin-income-pending';warn.textContent='⚠️ Giờ Earnings '+fmtMinutes(minutes)+' / Rolling '+fmtMinutes(expected)+'. Có thể thiếu chuyến; vẫn lưu tạm được.';container.append(warn)}
+  list.append(container)
+ }
+ const msg=incomeOCRIssues.filter(x=>!/Tips pending/i.test(x));$('fin-income-ocr-warnings').textContent=msg.join('\n')||'Chưa có cảnh báo.';
+ $('fin-income-review-audit').textContent='';
 }
 const dateEnglish=line=>{
  let m=line.match(/\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/);if(m)return [Number(m[1]),Number(m[2]),Number(m[3]),null];
@@ -1251,8 +1262,8 @@ function parseIncomeOCR(text){
   }
   if(!m){if(/\$|base\s*:|tips\s*:|paid\b/i.test(text))warnings.push(seg.date+': có dòng tiền nhưng OCR không đọc được giờ hoặc ngày; kiểm tra/thêm chuyến thủ công');continue}
   if(!start||!end||duration(start,end)<=0||duration(start,end)>720){warnings.push(seg.date+': giờ chuyến không hợp lệ');continue}
-  if(/tips?\s+pending/i.test(text)){warnings.push(seg.date+' '+start+'–'+end+' Tips pending — chưa chốt');pending++;continue}
-  if(!/\bpaid\b|\bbase\s*:|\btips\s*:|\bcompleted\b/i.test(text)){
+  const pendingTips=/tips?\s+pending/i.test(text);if(pendingTips)pending++;
+  if(!pendingTips&&!/\bpaid\b|\bbase\s*:|\btips\s*:|\bcompleted\b/i.test(text)){
    warnings.push(seg.date+' '+start+'–'+end+': chưa xác nhận Paid; kiểm tra ảnh');continue;
   }
   const base=text.match(/\bbase\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i),tips=text.match(/\btips\s*:\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
@@ -1262,7 +1273,7 @@ function parseIncomeOCR(text){
   const total=gross!==null?gross:(b!==null&&t!==null?b+t:null);
   if(total===null){warnings.push(seg.date+' '+start+': OCR thiếu tổng tiền; kiểm tra/thêm chuyến');continue}
   if(b!==null&&t!==null&&b+t!==total){warnings.push(seg.date+' '+start+': tổng '+fmtMoney(total)+' khác Base+Tips '+fmtMoney(b+t)+'; cần kiểm tra');}
-  rows.push({kind:'delivery',date:seg.date,start,end,cents:total,baseCents:b,tipsCents:t});
+  rows.push({kind:'delivery',date:seg.date,start,end,cents:total,baseCents:pendingTips?(b??total):b,tipsCents:pendingTips?null:t,pending:pendingTips});
  }
  return {rows,warnings,pending,segments:segments.length};
 }
@@ -1276,6 +1287,7 @@ function dedupIncomeReview(items){
  for(const r of items){
   const key=recordKey(r),old=merged.get(key);
   if(!old){merged.set(key,r);continue}
+  if(old.kind!=='special'&&!!old.pending!==!!r.pending){duplicates++;if(!r.pending)merged.set(key,r);continue}
   // Same-day/time with different pay may be an OCR collision. Never silently
   // discard either candidate: user must identify the correct one in preview.
   if(old.cents!==r.cents){
@@ -1328,9 +1340,9 @@ function importOCRImages(files){
   incomeOCRIssues.push(...result.conflicts);
   // If one screenshot was taken while Tips were pending and a later screenshot
   // shows the same block Paid, do not keep this date falsely flagged as pending.
-  const paidKeys=new Set(review.filter(r=>r.kind!=='special').map(recordKey));
+  const paidKeys=new Set(review.filter(r=>r.kind!=='special'&&!r.pending).map(recordKey));
   const oldKeys=new Set(incomeLoad().records.map(recordKey));
-  incomePendingDates=new Set([...incomePendingKeys].filter(k=>!paidKeys.has(k)&&!oldKeys.has(k)).map(k=>k.slice(0,10)));
+  incomePendingDates=new Set(review.filter(r=>r.pending&&!paidKeys.has(recordKey(r))&&!oldKeys.has(recordKey(r))).map(r=>r.date));
   updateReview();$('fin-income-confirm').checked=false;
   $('fin-income-status').textContent=`Đã đọc ${files.length} ảnh. ${review.length} mục sau gộp trùng; ${incomeOCRIssues.length} cảnh báo. Vui lòng so ngày/giờ/tổng tiền với ảnh trước khi lưu.`;
  }catch(err){incomeOCRIssues.push('Lỗi OCR: '+err.message);$('fin-income-status').textContent='Lỗi OCR: '+err.message+'. Đã giữ kết quả đọc trước đó; bạn có thể thêm ảnh hoặc nhập tay.';updateReview()}
@@ -1349,42 +1361,45 @@ function addSpecial(){setupReviewRow({kind:'special',date:parseDate($('day')?.va
 $('fin-income-add').onclick=addManual;$('fin-income-more-manual').onclick=addManual;$('fin-income-add-special').onclick=addSpecial;$('fin-income-more-special').onclick=addSpecial;
 $('fin-income-cancel').onclick=()=>{$('fin-income-review').hidden=true;review=[];blockedPending=0;dupReview=0;incomePendingDates=new Set();incomeOCRIssues=[];incomeOCRDayNotes=[];clearIncomeEvidence()};
 $('fin-income-save').onclick=()=>{
- if(!review.length){alert('Chưa có mục thu nhập nào để lưu.');return}
- if(review.some(r=>!validReview(r))){alert('Hãy kiểm tra ngày, giờ, loại khoản và số tiền của tất cả mục trước khi lưu.');return}
- const deliveries=review.filter(r=>r.kind!=='special'),specials=review.filter(r=>r.kind==='special');
- if(deliveries.length&&!$('fin-income-confirm').checked){alert('Hãy xác nhận đã đủ Base + Tips và đầy đủ chuyến của các ngày bạn sẽ chốt.');return}
- if(blockedPending&&!confirm('Có '+blockedPending+' dòng Tips pending trong ảnh. Chuyến pending sẽ không tính tiền; ngày liên quan sẽ KHÔNG được đánh dấu chốt đủ Tips. Bạn có thể lưu các chuyến Paid ở ngày khác. Tiếp tục?'))return;
- if(incomeOCRIssues.length&&!confirm('OCR có '+incomeOCRIssues.length+' cảnh báo (xem Kiểm tra OCR từng ảnh). Nếu đã đối chiếu và bổ sung các chuyến thiếu thì tiếp tục; không, chọn Hủy để kiểm tra.'))return;
- const distinct=new Map();let unresolvedCollisions=0;
- for(const r of deliveries){const k=recordKey(r),other=distinct.get(k);
-  if(other&&(other.cents!==r.cents||
-   (Number.isSafeInteger(other.baseCents)&&Number.isSafeInteger(r.baseCents)&&other.baseCents!==r.baseCents)||
-   (Number.isSafeInteger(other.tipsCents)&&Number.isSafeInteger(r.tipsCents)&&other.tipsCents!==r.tipsCents)))unresolvedCollisions++;
-  if(!other||incomeQuality(r)>incomeQuality(other))distinct.set(k,r);
+ if(!review.length){alert('Chưa có chuyến hoặc khoản tiền nào để lưu.');return}
+ if(review.some(r=>!validReview(r))){alert('Có dòng OCR chưa đủ ngày, giờ hoặc số tiền. Chạm dòng đó để chỉnh hoặc chọn Bỏ.');return}
+ if(!$('fin-income-confirm').checked){alert('Hãy đánh dấu xác nhận đã xem danh sách giao dịch.');return}
+ const distinct=new Map(),specials=new Map();let collisions=0;
+ for(const r of review){if(r.kind==='special'){specials.set(specialKey(r),r);continue}
+  const key=recordKey(r),old=distinct.get(key);
+  if(!old){distinct.set(key,r);continue}
+  if(!!old.pending!==!!r.pending){if(!r.pending)distinct.set(key,r);continue}
+  if(old.cents!==r.cents||(Number.isSafeInteger(old.baseCents)&&Number.isSafeInteger(r.baseCents)&&old.baseCents!==r.baseCents)||(Number.isSafeInteger(old.tipsCents)&&Number.isSafeInteger(r.tipsCents)&&old.tipsCents!==r.tipsCents)){collisions++;continue}
+  if(incomeQuality(r)>incomeQuality(old))distinct.set(key,r)
  }
- if(unresolvedCollisions){alert('Có '+unresolvedCollisions+' chuyến cùng ngày/giờ nhưng tiền hoặc Base/Tips khác nhau. OCR có thể đọc sai và gộp nhầm. Hãy so ảnh Amazon rồi bấm BỎ CHUYẾN ở dòng sai; ứng dụng CHƯA LƯU để tránh mất tiền.');return}
- const gaps=incomeReviewCompleteness([...distinct.values()]);const incompleteDates=gaps.filter(g=>g.incomplete);
- const referenceGaps=referenceProblems([...distinct.values(),...specials]);const monthGaps=monthReferenceProblems([...distinct.values(),...specials]);const reviewBlockDates=new Set([...incompleteDates.map(g=>g.date),...referenceGaps.map(g=>g.date)]);
- for(const m of monthGaps){for(const d of [...distinct.values(),...specials].filter(r=>ym(r.date)===m.month).map(r=>r.date))reviewBlockDates.add(d)}
- if(incomeGlobalProblem){for(const d of [...distinct.values()].map(r=>r.date))reviewBlockDates.add(d)}
- if((incompleteDates.length||referenceGaps.length||monthGaps.length||incomeGlobalProblem)&&!confirm('⚠️ OCR CÓ THỂ BỎ SÓT CHUYẾN!\n'+incompleteDates.map(g=>prettyDate(g.date)+': Earnings '+fmtMinutes(g.minutes)+' / Rolling '+fmtMinutes(g.expected)+' (thiếu '+fmtMinutes(g.missing)+')').join('\n')+'\n'+(referenceGaps.length?'ĐỐI CHIẾU KHÔNG KHỚP: '+referenceGaps.map(g=>prettyDate(g.date)+' '+g.problems.join(', ')).join('; ')+'\n':'')+(monthGaps.length?'TỔNG THÁNG KHÔNG KHỚP: '+monthGaps.map(g=>monthLabel(g.month)+' '+fmtMoney(g.observed)+' / '+fmtMoney(g.expected)).join('; ')+'\n':'')+(incomeGlobalProblem?'Có ảnh OCR không tìm được giao dịch; cần kiểm tra ảnh.\n':'')+'\nChọn OK chỉ để LƯU TẠM các chuyến đã đọc; các ngày thiếu sẽ KHÔNG được đánh dấu chốt đủ. Chọn Hủy để bổ sung ảnh/chuyến.'))return;
- const specialMap=new Map(specials.map(r=>[specialKey(r),r]));if(specialMap.size!==specials.length&&!confirm('Các khoản cộng thêm có cùng loại, ngày và số tiền. Sẽ chỉ tính một lần để chống trùng. Tiếp tục?'))return;
- const data=incomeLoad(),dates=[...new Set(deliveries.map(r=>r.date))];
- // Upsert by day + start/end so overlapping screenshot re-uploads replace that block, never erase other saved blocks.
- const keys=new Map(data.records.map(r=>[recordKey(r),r]));
+ if(collisions){alert('Có '+collisions+' cặp cùng ngày/giờ nhưng khác tiền. Hãy mở các dòng và bỏ kết quả OCR sai trước khi lưu.');return}
+ const data=incomeLoad(),savedPaid=new Map(data.records.map(r=>[recordKey(r),r])),savedPending=new Map(data.pendingRecords.map(r=>[recordKey(r),r]));
+ const now=new Date().toISOString(),touchedDates=new Set(),pendingDates=new Set();let newPaid=0,newPending=0,updated=0;
  for(const r of distinct.values()){
-  const k=recordKey(r),old=keys.get(k),preserve=old&&old.cents===r.cents;
-  keys.set(k,{date:r.date,start:r.start,end:r.end,cents:r.cents,
-   baseCents:r.baseCents??(preserve?old.baseCents:null)??null,
-   tipsCents:r.tipsCents??(preserve?old.tipsCents:null)??null,
-   updatedAt:new Date().toISOString()});
+  const key=recordKey(r),date=r.date;touchedDates.add(date);
+  if(r.pending){if(savedPaid.has(key))continue;pendingDates.add(date);if(!savedPending.has(key))newPending++;savedPending.set(key,{date,start:r.start,end:r.end,cents:r.cents,baseCents:r.baseCents??null,tipsCents:null,updatedAt:now});continue}
+  if(savedPaid.has(key))updated++;else newPaid++;
+  const previous=savedPaid.get(key),preserve=previous&&previous.cents===r.cents;
+  savedPaid.set(key,{date,start:r.start,end:r.end,cents:r.cents,baseCents:r.baseCents??(preserve?previous.baseCents:null)??null,tipsCents:r.tipsCents??(preserve?previous.tipsCents:null)??null,updatedAt:now});
+  savedPending.delete(key);
  }
- const extras=new Map(data.specials.map(r=>[specialKey(r),r]));let duplicates=0;
- for(const r of specialMap.values()){const k=specialKey(r);if(extras.has(k)){duplicates++;continue}extras.set(k,{date:r.date,specialType:r.specialType,cents:r.cents,updatedAt:new Date().toISOString()})}
- data.records=[...keys.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
+ for(const [key] of savedPaid)savedPending.delete(key);
+ for(const r of savedPending.values())pendingDates.add(r.date);
+ const extras=new Map(data.specials.map(r=>[specialKey(r),r]));let newExtras=0;
+ for(const r of specials.values())if(!extras.has(specialKey(r))){newExtras++;extras.set(specialKey(r),{date:r.date,specialType:r.specialType,cents:r.cents,updatedAt:now});touchedDates.add(r.date)}
+ data.records=[...savedPaid.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
+ data.pendingRecords=[...savedPending.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start));
  data.specials=[...extras.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.specialType.localeCompare(b.specialType));
- data.finalDays=[...new Set([...data.finalDays.filter(d=>!incomePendingDates.has(d)&&!reviewBlockDates.has(d)),...dates.filter(d=>!incomePendingDates.has(d)&&!reviewBlockDates.has(d))])].sort();data.version=2;
- localStorage.setItem(MONEYKEY,JSON.stringify(data));resetIncomeDeleteUndo();pruneExpired();review=[];blockedPending=0;dupReview=0;incomePendingDates=new Set();incomeOCRIssues=[];incomeOCRDayNotes=[];clearIncomeEvidence();$('fin-income-review').hidden=true;renderIncome();$('fin-income-status').textContent='Đã ghi nhận '+distinct.size+' chuyến, '+(specialMap.size-duplicates)+' khoản cộng thêm mới'+(duplicates?' · bỏ qua '+duplicates+' khoản đã có':'')+(reviewBlockDates.size?' · ⚠️ '+reviewBlockDates.size+' ngày có cảnh báo/không khớp, ĐÃ LƯU TẠM nhưng CHƯA CHỐT.':'')+'. Không thay đổi giờ Rolling.';
+ const complete=new Set(data.finalDays.filter(d=>!pendingDates.has(d)));
+ let missingDays=0;
+ for(const date of touchedDates){if(pendingDates.has(date)){complete.delete(date);continue}
+  const expected=Number(rolling()[date]?.a)||0,minutes=data.records.filter(r=>r.date===date).reduce((n,r)=>n+duration(r.start,r.end),0);
+  if(expected>0&&minutes+12<expected){complete.delete(date);missingDays++}else if(expected>0&&minutes>=expected-12)complete.add(date);
+ }
+ data.finalDays=[...complete].sort();data.version=3;
+ localStorage.setItem(MONEYKEY,JSON.stringify(data));resetIncomeDeleteUndo();pruneExpired();
+ review=[];blockedPending=0;dupReview=0;incomePendingDates=new Set();incomePendingKeys=new Set();incomeOCRIssues=[];incomeOCRDayNotes=[];clearIncomeEvidence();$('fin-income-review').hidden=true;
+ renderIncome();$('fin-income-status').textContent='Đã lưu '+newPaid+' chuyến Paid mới, '+newPending+' chuyến chờ Tips, cập nhật '+updated+' chuyến cũ, '+newExtras+' khoản cộng thêm.'+(missingDays?' ⚠️ '+missingDays+' ngày có thể thiếu chuyến, chưa chốt.':'')+' Dữ liệu Rolling không đổi.';
 };
 function healthEstimate(h,q,asDate){if(!Number.isSafeInteger(h.confirmedMinutes)||!parseDate(h.asOf)||h.asOf<q.from||h.asOf>asDate)return {confirmed:null,estimated:null,unconfirmed:0};
  const end=asDate<q.to?asDate:q.to,unconfirmed=nextDay(h.asOf,1)<=end?totalDays(rolling(),nextDay(h.asOf,1),end):0;return {confirmed:h.confirmedMinutes,estimated:h.confirmedMinutes+unconfirmed,unconfirmed};}
@@ -1438,7 +1453,7 @@ const checkHealthcare=h=>{if(!h||typeof h!=='object')throw Error('Dữ liệu He
  }
 };
 window.flexFinanceValidate=(p)=>{
- if(p.income!==undefined){if(!p.income||typeof p.income!=='object'||!Array.isArray(p.income.records)||!Array.isArray(p.income.finalDays)||(p.income.specials!==undefined&&(!Array.isArray(p.income.specials)||p.income.specials.some(r=>!validSpecial(r))))||p.income.records.some(r=>!validIncome(r))||p.income.finalDays.some(d=>!parseDate(d)))throw Error('Dữ liệu thu nhập trong JSON không hợp lệ');}
+ if(p.income!==undefined){if(!p.income||typeof p.income!=='object'||!Array.isArray(p.income.records)||!Array.isArray(p.income.finalDays)||(p.income.specials!==undefined&&(!Array.isArray(p.income.specials)||p.income.specials.some(r=>!validSpecial(r))))||(p.income.pendingRecords!==undefined&&(!Array.isArray(p.income.pendingRecords)||p.income.pendingRecords.some(r=>!validIncome(r))))||p.income.records.some(r=>!validIncome(r))||p.income.finalDays.some(d=>!parseDate(d)))throw Error('Dữ liệu thu nhập trong JSON không hợp lệ');}
  if(p.healthcare!==undefined)checkHealthcare(p.healthcare);
 };
 window.flexFinanceImport=p=>{window.flexFinanceValidate(p);
