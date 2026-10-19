@@ -850,6 +850,18 @@ renderExtra();
 .fin-review-row.fin-pending>summary{color:#835712}
 .fin-review-row>summary+.fin-inputs{margin-top:12px}
 .fin-status-select{display:block;max-width:100%;width:100%;font-size:16px}
+
+/* UI-only income layout refinement, 2026-10-18. Keep all application logic and stores intact. */
+#flex-income-card .fin-tile.fin-wide{grid-column:1 / -1;}
+#flex-income-card .fin-month-split{display:grid;gap:8px;margin-top:9px;}
+#flex-income-card .fin-month-split .fin-month-line{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:clamp(13px,3.4vw,16px);line-height:1.35;min-width:0;}
+#flex-income-card .fin-month-split .fin-month-line b{font-size:clamp(17px,4.2vw,24px);font-variant-numeric:tabular-nums;white-space:nowrap;}
+#flex-income-card .fin-month-split .fin-base{color:#148343;}
+#flex-income-card .fin-month-split .fin-tips{color:#196ec7;}
+#flex-income-card .fin-day-breakdown .fin-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+#flex-income-card .fin-day-breakdown .fin-line b{white-space:nowrap;}
+#flex-income-card #fin-income-unfinished{margin-top:8px;}
+@media(max-width:390px){#flex-income-card .fin-month-split .fin-month-line{gap:4px;font-size:13px}#flex-income-card .fin-month-split .fin-month-line b{font-size:clamp(16px,4.6vw,20px)}}
 </style>
 <section class="card" id="flex-income-card"><details><summary>Thu nhập · Ngày / Tuần / Tháng / $ mỗi giờ</summary>
 <p class="note">Thu nhập gồm <b>Base + Tips, Earnings Adjustment, Additional Tips và Healthcare Subsidy đã trả</b>. Không cộng Instant Cash Out hay Payment sent. Ảnh <b>Tips pending</b> được lưu thành tiền tạm tính, không cộng vào thu nhập đã chốt. Không thay đổi giờ Rolling.</p>
@@ -857,9 +869,9 @@ renderExtra();
 <div class="fin-tile"><small>Tiền ngày đang xem</small><strong id="fin-income-day">—</strong><div id="fin-income-day-breakdown" class="fin-day-breakdown"><div class="fin-line"><span>Đã chốt</span><b id="fin-day-paid">$0.00</b></div><div class="fin-line"><span>Chờ Tips</span><b id="fin-day-pending" class="fin-income-pending">$0.00</b></div><div class="fin-line"><span>Tổng tạm tính</span><b id="fin-day-estimate">$0.00</b></div></div><div class="fin-mini" id="fin-income-day-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tuần (T2–CN)</small><strong id="fin-income-week">—</strong><div class="fin-mini" id="fin-income-week-split">Base / Tips: —</div></div>
 <div class="fin-tile"><small>Tiền tháng hiện tại</small><strong id="fin-income-month">—</strong></div>
-<div class="fin-tile"><small>Base / Tips (tháng)</small><strong id="fin-income-split">—</strong></div><div class="fin-tile"><small>Adjustment / Tips thêm / Healthcare (tháng)</small><strong id="fin-income-specials">—</strong><div class="fin-mini" id="fin-income-special-breakdown">Adjustment: — · Tips thêm: — · Healthcare: —</div></div>
+<div class="fin-tile"><small>Base / Tips (tháng)</small><div id="fin-income-split" class="fin-month-split"><div class="fin-month-line fin-base"><span>Base:</span><b id="fin-month-base">—</b></div><div class="fin-month-line fin-tips"><span>Tips:</span><b id="fin-month-tips">—</b></div></div></div><div class="fin-tile"><small>Adjustment / Tips thêm / Healthcare (tháng)</small><strong id="fin-income-specials">—</strong><div class="fin-mini" id="fin-income-special-breakdown">Adjustment: — · Tips thêm: — · Healthcare: —</div></div>
 <div class="fin-tile"><small>Trung bình / giờ (gồm các khoản cộng thêm)</small><strong id="fin-income-rate">—</strong></div>
-<div class="fin-tile"><small>Ngày đã chạy chưa chốt tiền (trong tuần)</small><strong id="fin-income-unfinished">—</strong></div>
+<div class="fin-tile fin-wide"><small>Ngày đã chạy chưa chốt tiền (trong tuần)</small><strong id="fin-income-unfinished">—</strong></div>
 </div>
 <details class="flex-panel" id="fin-special-ledger"><summary>Chi tiết / Khôi phục khoản cộng thêm</summary>
 <div class="fin-status" id="fin-special-ledger-detail">Đang kiểm tra giao dịch đã lưu…</div>
@@ -1145,13 +1157,16 @@ function renderIncome(){const data=incomeLoad(),selected=parseDate($('day')?.val
  const waiting=data.pendingRecords.filter(r=>r.date===selected),waitingCents=sum(waiting),confirmedCents=sum(day);
  $('fin-income-day').textContent=waiting.length?'Chờ Tips':day.length?fmtMoney(confirmedCents):'Chưa có Earnings';
  $('fin-day-paid').textContent=fmtMoney(confirmedCents);
- $('fin-day-pending').textContent=fmtMoney(waitingCents)+(waiting.length?' · '+waiting.length+' chuyến':'');
+ $('fin-day-pending').textContent=fmtMoney(waitingCents);
  $('fin-day-estimate').textContent=fmtMoney(confirmedCents+waitingCents);
  $('fin-income-week').textContent=week.length?fmtMoney(sum(week)):'—';
  $('fin-income-day-split').textContent='Base / Tips: '+split(day);
  $('fin-income-week-split').textContent='Base / Tips: '+split(week);
  $('fin-income-month').textContent=month.length?fmtMoney(sum(month)):'—';
- $('fin-income-split').textContent=split(month);$('fin-income-specials').textContent=fmtMoney(sum(month.filter(r=>r.specialType)));
+ const monthDeliveries=month.filter(r=>!r.specialType);
+ $('fin-month-base').textContent=monthDeliveries.length?fmtMoney(monthDeliveries.reduce((n,r)=>n+(Number.isSafeInteger(r.baseCents)?r.baseCents:0),0)):'—';
+ $('fin-month-tips').textContent=monthDeliveries.length?fmtMoney(monthDeliveries.reduce((n,r)=>n+(Number.isSafeInteger(r.tipsCents)?r.tipsCents:0),0)):'—';
+ $('fin-income-specials').textContent=fmtMoney(sum(month.filter(r=>r.specialType)));
  const adj=month.filter(r=>r.specialType==='adjustment'),extra=month.filter(r=>r.specialType==='extra_tips'),subsidy=month.filter(r=>r.specialType==='health_subsidy');
  $('fin-income-special-breakdown').textContent='Adjustment: '+fmtMoney(sum(adj))+' · Tips thêm: '+fmtMoney(sum(extra))+' · Healthcare: '+fmtMoney(sum(subsidy));
  const unclassified=month.filter(r=>!r.specialType).reduce((n,r)=>n+Math.max(0,r.cents-(Number.isSafeInteger(r.baseCents)?r.baseCents:0)-(Number.isSafeInteger(r.tipsCents)?r.tipsCents:0)),0);
